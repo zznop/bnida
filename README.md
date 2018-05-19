@@ -1,16 +1,27 @@
 # Binary Ninja Importer
-Utility for importing analysis information into Binary Ninja.  The only currently supported mechanism is from IDA. This utility has two parts:
-1. An exporter script which runs on the tool you wish to pull analysis information from. This tool writes a .json file to disk that can be consumed by the importer.
-2. A Binary Ninja plugin which imports the exported information.
 
+Utility for transfering analysis information between Binary Ninja and IDA pro. This utility has four parts:
+1. An IDA plugin that exports analysis data to a json file
+2. A Binary Ninja plugin/script that imports the analysis data that has been exported from IDA
+3. A Binary Ninja plugin/script that exports analysis data to a json file
+4. An IDA plugin that imports analysis data that has been exported from Binary Ninja
 
 ## Usage
 
-Install the `binja_import.py` script into your Binary Ninja user directory. https://docs.binary.ninja/getting-started/index.html#user-folder
+Install the `binja_import.py` and `binja_export.py` scripts into your Binary Ninja user directory. https://docs.binary.ninja/getting-started/index.html#user-folder
 
-Open IDA (this script was only tested in IDA 6.9) Click `File->Script File` and select the `ida_export.py` script. The script will prompt you for a filename to write the export information to.
+### IDA->Binary Ninja
 
-## Supported Analysis data
+1. Open your IDA database
+2. Click `File->Script File` and select the `ida_export.py`
+3. Input the filename of the file you want to write the exported data to
+4. Click Ok. Analysis data will be written to the json file.
+5. Open your BN database for the same binary
+6. Click `tools->Import data to BN`
+7. Enter the file path to the json file
+8. Click ok. Your database will then be updated with the analysis data from IDA.
+
+#### Supported Analysis data
 
 1. Function
     start address
@@ -20,13 +31,26 @@ Open IDA (this script was only tested in IDA 6.9) Click `File->Script File` and 
     string objects (start, length, type)
     string cross-references
 
-## Unsupported Analysis data
+#### Unsupported Analysis data
 
 1. Segments
 2. Global non-string data
 3. Local variable names and types
 4. Standard types and enumerations
 5. Non-function comments (currently unsupported by Binary Ninja)
+
+### Binary Ninja->IDA
+
+1. Open your Binary Ninja database
+2. Click `tools->Export data from BN`
+3. Enter the filename of the file you want to write the exported data to
+4. Click Ok. Analysis data will be written to the json file
+5. Open your IDA database for the same binary
+6. Click `File->Script File` and select the `ida_import.py`
+7. Select the json file
+8. Click ok. Your database will then be updated with the analysis data from BN.
+
+Analysis data for IDA to Binary Ninja is currently limited to comments and symbol names.
 
 ## Notes
 
