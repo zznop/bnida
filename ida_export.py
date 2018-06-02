@@ -2,9 +2,10 @@ import idc
 import idautils
 import json
 
-def get_linear_comment(ea, is_func=False):
+def get_single_comment(ea, is_func=False):
     """IDA has repeatable and regular comments. BN only has regular comments.
-    This function constructs a single comment
+    This function constructs a single comment from both repeatable and regular
+    comments
     """
     regular_comment    = ""
     repeatable_comment = ""
@@ -43,7 +44,7 @@ def get_symbols():
     return symbols
 
 def get_sections():
-    """Get section names and start/end addrs
+    """Get section names and start/end addrs from IDA database
     """
     sections = {}
     for ea in idautils.Segments():
@@ -55,22 +56,23 @@ def get_sections():
     return sections
 
 def get_comments():
-    """Get function and instruction comments
+    """Get function and instruction comments from IDA database
     """
     comments = {}
     for ea in idautils.Functions():
         current_function = {}
         end = idc.GetFunctionAttr(ea, idc.FUNCATTR_END)
-        current_function["comment"] = get_linear_comment(ea, True)
+        current_function["comment"] = get_single_comment(ea, True)
         current_function["comments"] = {}
         for line_ea in idautils.Heads(ea, end):
-            if line_comment is not None:
-                current_function["comments"][line_ea] = line_comment
+            instr_comment = get_single_comment(line_ea)
+            if instr_comment is not None:
+                current_function["comments"][line_ea] = instr_comment
         comments[ea] = current_function
 
     return comments
 
-def main(filename):
+def main(json_file):
     """Construct a json file containing analysis data from an IDA database
     """
     json_array = {}
