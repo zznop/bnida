@@ -39,7 +39,7 @@ def get_symbols():
     """
     symbols = {}
     for addr, name in idautils.Names():
-        symbols[name] = addr
+        symbols[addr] = name
 
     return symbols
 
