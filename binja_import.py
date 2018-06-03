@@ -1,3 +1,9 @@
+"""binja_import.py: imports analysis data into a BN databsae from a json file"""
+
+__author__      = "zznop"
+__copyright__   = "Copyright 2018, zznop0x90@gmail.com"
+__license__     = "WTFPL"
+
 import json
 from binaryninja import *
 

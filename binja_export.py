@@ -1,3 +1,9 @@
+"""binja_export.py: exports analysis data from a BN database to a json file"""
+
+__author__      = "zznop"
+__copyright__   = "Copyright 2018, zznop0x90@gmail.com"
+__license__     = "WTFPL"
+
 import json
 from optparse import OptionParser
 from binaryninja import *

@@ -1,3 +1,9 @@
+"""ida_export.py: exports IDA analysis data to a json file"""
+
+__author__      = "zznop"
+__copyright__   = "Copyright 2018, zznop0x90@gmail.com"
+__license__     = "WTFPL"
+
 import idc
 import idautils
 import json

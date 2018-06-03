@@ -1,3 +1,9 @@
+"""ida_import.py: imports BN analysis data into a IDA database from a json file"""
+
+__author__      = "zznop"
+__copyright__   = "Copyright 2018, zznop0x90@gmail.com"
+__license__     = "WTFPL"
+
 import idc
 import idautils
 import idaapi
