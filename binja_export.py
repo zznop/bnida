@@ -2,6 +2,29 @@ import json
 from optparse import OptionParser
 from binaryninja import *
 
+class GetOptions:
+    def __init__(self):
+        json_file = OpenFileNameField("Export json file")
+        get_form_input([json_file], "BN Export Options")
+        if json_file.result == '':
+            self.json_file = None
+        else:
+            self.json_file = json_file.result
+
+class ExportBNInBackground(BackgroundTaskThread):
+    def __init__(self, bv, options):
+        global task
+        BackgroundTaskThread.__init__(self, "Exporting data from BN", False)
+        self.json_file = options.json_file
+        self.options   = options
+        self.bv        = bv
+        task           = self
+
+    def run(self):
+        (success, error_message) = export_bn(self.options.json_file, self.bv)
+        if not success:
+            log_error(error_message)
+
 def get_functions(bv):
     """Populate dictionary of function names and offsets
     """
@@ -49,65 +72,18 @@ def export_bn(json_file, bv):
     json_array["comments"]  = get_comments(bv)
 
     try:
-        with open(json_file, "wb") as f:
+        with open(json_file, "wb+") as f:
             f.write(json.dumps(json_array, indent=4))
     except Exception as ex:
         return False, "Failed to create JSON file {} {}".format(json_file, ex)
 
     return True, None
 
-class GetOptions:
-    def __init__(self, interactive=False):
-        # from BN UI
-        if interactive:
-            json_file = OpenFileNameField("Export json file")
-            get_form_input([json_file], "BN Export Options")
-            if json_file.result == '':
-                self.json_file = None
-            else:
-                self.json_file = json_file.result
-            return 
-
-        # headless
-        usage            = "usage: %prog <bn_database.bndb> <ida_export.json>"
-        parser           = OptionParser(usage=usage)
-        (options, args)  = parser.parse_args()
-        self.bn_database = args[0]
-        self.json_file   = args[1]
-        self.usage       = parser.get_usage()
-
-class ExportBNInBackground(BackgroundTaskThread):
-    def __init__(self, bv, options):
-        global task
-        BackgroundTaskThread.__init__(self, "Exporting data from BN", False)
-        self.json_file = options.json_file
-        self.options   = options
-        self.bv        = bv
-        task           = self
-
-    def run(self):
-        (success, error_message) = export_bn(self.options.json_file, self.bv)
-        if not success:
-            log_error(error_message)
-
-def export_bn_headless():
-    """Export data running as headless script
-    """
-    options = GetOptions(False)
-    bv = BinaryViewType.get_view_of_file(options.bn_database)
-    bv.update_analysis_and_wait()
-    (success, error_message) = export_bn(options.json_file, bv)
-    if not success:
-        print "Error: {}".format(error_message)
-
 def export_bn_in_background(bv):
     """Export data in background from BN UI
     """
-    options = GetOptions(True)
+    options = GetOptions()
     background_task = ExportBNInBackground(bv, options)
     background_task.start()
 
-if __name__ == '__main__':
-    export_bn_headless()
-else:
-    PluginCommand.register("Export data from BN", "Export data from BN", export_bn_in_background)
+PluginCommand.register("Export data from BN", "Export data from BN", export_bn_in_background)
