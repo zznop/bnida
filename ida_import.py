@@ -19,30 +19,19 @@ def sanitize_name(name):
 def import_comments(comments):
     """Import BN comments
     """
-    for addr, comment in comments.items():
-        addr = int(addr)
-        comment = comment.encode("utf-8")
-        current_comment = idc.Comment(addr)
+    for addr, current_function in comments.iteritems():
+        if current_function["comment"]:
+            idc.MakeRptCmt(int(addr), current_function["comment"].encode("utf-8"))
 
-        # make a new comment
-        if not current_comment:
-            idc.MakeComm(addr, comment)
-            continue
-
-        # ensure comments hasn't already been imported
-        if comment in current_comment:
-            continue
-
-        # append to comment
-        idc.MakeComm(addr, current_comment + " " + comment)
+        for addr, comment in current_function["comments"].iteritems():
+            idc.MakeComm(int(addr), comment.encode("utf-8"))
 
 def import_symbols(names):
     """Import BN symbol names
     """
     for addr, name in names.items():
-        addr = int(addr)
         name = sanitize_name(name).encode("utf-8")
-        idc.MakeName(addr, name)
+        idc.MakeName(int(addr), name)
 
 def get_json(json_file):
     """Read JSON data file

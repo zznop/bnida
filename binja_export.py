@@ -52,8 +52,13 @@ def get_comments(bv):
     """
     comments = {}
     for func in bv:
+        current_function = {}
+        current_function["comment"] = func.comment
+        current_function["comments"] = {}
         for addr in func.comments:
-            comments[addr] = func.get_comment_at(addr)
+            current_function["comments"][addr] = func.get_comment_at(addr)
+        comments[func.start] = current_function
+
     return comments
 
 def get_sections(bv):
