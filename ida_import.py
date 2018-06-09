@@ -16,6 +16,31 @@ def sanitize_name(name):
     name = name.replace("@", "_")
     return name
 
+def base_addr_off_section(sections, addr):
+    """Adjust the address if there are differences in section base addresses
+    """
+    bn_section_start = None
+    section_name = None
+    for name, section in sections.iteritems():
+        if addr >= int(section["start"]) and addr <= int(section["end"]):
+            bn_section_start = int(section["start"])
+            section_name = name
+            break
+
+    # make sure the section was found (this check should always pass)
+    if section_name is None:
+        print "Section not found in BN analysis data for addr: {:08x}".format(addr)
+        return None
+
+    # retrieve section start in IDA and adjust the addr
+    ida_sections = idautils.Segments()
+    for ea in ida_sections:
+        if idc.SegName(ea) == section_name:
+            return addr - bn_section_start + idc.SegStart(ea)
+
+    print "Section not found in IDA - name:{} addr:{:08x}".format(section_name, addr)
+    return None
+
 def import_comments(comments):
     """Import BN comments
     """
