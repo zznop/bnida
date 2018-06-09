@@ -41,30 +41,41 @@ def base_addr_off_section(sections, addr):
     print "Section not found in IDA - name:{} addr:{:08x}".format(section_name, addr)
     return None
 
-def import_comments(comments):
+def import_comments(comments, sections):
     """Import BN comments
     """
     for addr, current_function in comments.iteritems():
+        addr = base_addr_off_section(sections, int(addr))
+        if addr is None:
+            continue 
+
         if current_function["comment"]:
             idc.MakeRptCmt(int(addr), current_function["comment"].encode("utf-8"))
 
-        for addr, comment in current_function["comments"].iteritems():
-            idc.MakeComm(int(addr), comment.encode("utf-8"))
+        for instr_addr, comment in current_function["comments"].iteritems():
+            instr_addr = base_addr_off_section(sections, int(instr_addr))
+            if instr_addr is None:
+                continue
 
-def import_symbols(names):
+            idc.MakeComm(instr_addr, comment.encode("utf-8"))
+
+def import_symbols(names, sections):
     """Import BN symbol names
     """
-    for addr, name in names.items():
+    for addr, name in names.iteritems():
+        addr = base_addr_off_section(sections, int(addr))
+        if addr is None:
+            continue
+
         name = sanitize_name(name).encode("utf-8")
-        idc.MakeName(int(addr), name)
+        idc.MakeName(addr, name)
 
 def get_json(json_file):
     """Read JSON data file
     """
     json_array = None
     if json_file is None:
-        print("JSON file not specified")
-        return json_array
+        return None
 
     try:
         f = open(json_file, "rb")
@@ -78,10 +89,11 @@ def main(json_file):
     """
     json_array = get_json(json_file)
     if not json_array:
+        print("JSON file not specified")
         return
 
-    import_symbols(json_array["names"])
-    import_comments(json_array["comments"])
+    import_symbols(json_array["names"], json_array["sections"])
+    import_comments(json_array["comments"], json_array["sections"])
 
 if __name__ == "__main__":
     main(idc.AskFile(1, "*.json", "Import file name"))
