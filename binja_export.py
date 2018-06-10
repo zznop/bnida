@@ -10,7 +10,7 @@ from binaryninja import *
 
 class GetOptions:
     def __init__(self):
-        json_file = OpenFileNameField("Export json file")
+        json_file = SaveFileNameField("Export json file")
         get_form_input([json_file], "BN Export Options")
         if json_file.result == '':
             self.json_file = None
