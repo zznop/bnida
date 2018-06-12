@@ -115,7 +115,7 @@ def import_ida(json_file, bv):
     set_comments(bv, json_array["comments"], json_array["sections"])
 
     # set symbol names
-    set_symbols(bv, json_array["symbols"], json_array["sections"])
+    set_symbols(bv, json_array["names"], json_array["sections"])
 
     bv.update_analysis_and_wait()
     return True, None
