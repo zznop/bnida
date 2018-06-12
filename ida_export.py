@@ -84,7 +84,7 @@ def main(json_file):
     json_array = {}
     json_array["sections"] = get_sections()
     json_array["comments"] = get_comments()
-    json_array["symbols"]  = get_symbols()
+    json_array["names"]  = get_symbols()
 
     with open(json_file, "wb") as f:
         f.write(json.dumps(json_array, indent=4))
