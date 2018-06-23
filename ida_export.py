@@ -78,6 +78,30 @@ def get_comments():
 
     return comments
 
+def get_struct_members(sid):
+    """Get members belonging to a structure by structure ID
+    """
+    members = {}
+    for offset, name, size in idautils.StructMembers(sid):
+        members[name] = {}
+        members[name]["offset"] = offset
+        members[name]["size"]   = size
+        # TODO: find a way to get a member's type
+
+    return members
+
+def get_structs():
+    """Get structures from IDA database
+    """
+    structs = {}
+    for idx, sid, name in idautils.Structs():
+        structs[name] = {}
+        structs[name]["size"]    = idc.GetStrucSize(sid)
+        structs[name]["members"] = get_struct_members(sid)
+
+    print structs
+    return structs
+
 def main(json_file):
     """Construct a json file containing analysis data from an IDA database
     """
@@ -85,6 +109,7 @@ def main(json_file):
     json_array["sections"] = get_sections()
     json_array["comments"] = get_comments()
     json_array["symbols"]  = get_symbols()
+    json_array["structs"]  = get_structs()
 
     with open(json_file, "wb") as f:
         f.write(json.dumps(json_array, indent=4))
