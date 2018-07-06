@@ -118,7 +118,6 @@ def get_struct_members(struct, sid):
         members[name]["type"]   = get_member_type(struct, offset)
         members[name]["offset"] = offset
         members[name]["size"]   = size
-        # TODO: find a way to get a member's type
 
     return members
 
@@ -132,7 +131,6 @@ def get_structs():
         structs[name]["size"]    = idc.GetStrucSize(sid)
         structs[name]["members"] = get_struct_members(struct, sid)
 
-    print structs
     return structs
 
 def main(json_file):
