@@ -72,12 +72,15 @@ def open_json_file(json_file):
 def set_structs(bv, structs):
     """Import IDA structures into BNDB
     """
-    for struct in structs:
+    for struct_name, struct_info in structs.iteritems():
         curr_struct = types.Structure()
-        for name, member in struct.iteritems():
-            curr_struct.insert("", bv.get_type_by_name(member["offset"], member["type"], member["name"]))
+        for member_name, member_info in struct_info["members"].iteritems():
+            print member_name
+            print member_info
+            typ, member_name = bv.parse_type_string("{} {}".format(member_info["type"], member_name))
+            curr_struct.insert(int(member_info["offset"]), typ, member_name)
         
-        bv.define_user_type(name, curr_struct)
+        bv.define_user_type(struct_name, curr_struct)
         
 
 def set_symbols(bv, names, sections):
