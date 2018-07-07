@@ -78,9 +78,8 @@ def set_structs(bv, structs):
             typ, _ = bv.parse_type_string("{}".format(member_info["type"]))
             curr_struct.insert(int(member_info["offset"]), typ, member_name)
         
-        bv.define_user_type(struct_name, curr_struct)
+        bv.define_user_type(struct_name.encode('utf-8'), Type.structure_type(curr_struct))
         
-
 def set_symbols(bv, names, sections):
     """Set IDA symbol names in BN database
     """
