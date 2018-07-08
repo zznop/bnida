@@ -69,6 +69,17 @@ def open_json_file(json_file):
 
     return json_array
 
+def set_structs(bv, structs):
+    """Import IDA structures into BNDB
+    """
+    for struct_name, struct_info in structs.iteritems():
+        curr_struct = types.Structure()
+        for member_name, member_info in struct_info["members"].iteritems():
+            typ, _ = bv.parse_type_string("{}".format(member_info["type"]))
+            curr_struct.insert(int(member_info["offset"]), typ, member_name)
+        
+        bv.define_user_type(struct_name.encode('utf-8'), Type.structure_type(curr_struct))
+        
 def set_symbols(bv, names, sections):
     """Set IDA symbol names in BN database
     """
@@ -111,12 +122,9 @@ def import_ida(json_file, bv):
     if json_array is None:
         return False
 
-    # set function and instruction comments
     set_comments(bv, json_array["comments"], json_array["sections"])
-
-    # set symbol names
     set_symbols(bv, json_array["names"], json_array["sections"])
-
+    set_structs(bv, json_array["structs"])
     bv.update_analysis_and_wait()
     return True, None
 
