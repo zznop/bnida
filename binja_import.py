@@ -123,9 +123,8 @@ def import_ida(json_file, bv):
         return False
 
     set_comments(bv, json_array["comments"], json_array["sections"])
-    set_symbols(bv, json_array["symbols"], json_array["sections"])
+    set_symbols(bv, json_array["names"], json_array["sections"])
     set_structs(bv, json_array["structs"])
-
     bv.update_analysis_and_wait()
     return True, None
 
