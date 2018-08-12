@@ -33,18 +33,22 @@ file.
 1. Open your IDA database (or load a binary and allow analysis to complete)
 
 2. Type `Alt+F7` and select the `ida_export.py`
+
 ![Run IDA Export](public/ida-run-script.PNG "Run ida_export.py script")
 
 3. Input the file path for the JSON file that will be created
 
 4. Click Ok. Analysis data will be written to the JSON file
+
 ![IDA Analysis Data JSON](public/ida-exported-json.PNG "IDA Analysis Data JSON")
 
 5. Open your BN database for the same binary (or load a binary and allow analysis to complete)
 6. Click `tools->Import data to BN`
+
 ![Run Binja Import](public/bn-tools-import-data.PNG "Run binja_import.py Plugin")
 
 7. Enter the file path to the JSON file
+
 ![Enter JSON File](public/bn-import-file-input.PNG "File path to IDA JSON")
 
 8. Click ok. Your database will then be updated with the analysis data from IDA.
