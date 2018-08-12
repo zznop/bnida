@@ -115,12 +115,46 @@ def set_comments(bv, comments, sections):
 
             func.set_comment_at(addr, instr_comment)
 
+def get_architectures():
+    """Return a key/dict of supported processors
+    """
+    archs = {}
+    for arch in list(Architecture):
+        archs[arch.name] = arch
+
+    return archs
+
+def set_flat_file_params(bv, sections):
+    """
+    Prompt the user for section offsets and default processor, and set them
+    """
+    archs = get_architectures()
+    arch_choices = list(archs.keys())
+    arch_field = ChoiceField("Default Platform", arch_choices)
+    input_fields = [arch_field, ]
+    section_fields = {}
+    for name, section in sections.iteritems():
+        section_fields[name] = IntegerField(name + " offset")
+        input_fields.append(section_fields[name])
+
+    get_form_input(input_fields, "Processor and Sections")
+
+    # set the default platform
+    bv.platform = archs[arch_choices[arch_field.result]].standalone_platform
+
+    # create the sections
+    for name, section_field in section_fields.iteritems():
+        bv.add_user_section(name, section_field.result, sections[name]["end"] - sections[name]["start"])
+
 def import_ida(json_file, bv):
     """Import IDA analysis data into BN database
     """
     json_array = open_json_file(json_file)
     if json_array is None:
         return False
+
+    if bv.platform is None:
+        set_flat_file_params(bv, json_array["sections"])
 
     set_comments(bv, json_array["comments"], json_array["sections"])
     set_symbols(bv, json_array["names"], json_array["sections"])
