@@ -34,22 +34,26 @@ file.
 
 2. Type `Alt+F7` and select the `ida_export.py`
 
-![Run IDA Export](public/ida-run-script.PNG "Run ida_export.py script")
+    **Run IDA Export Script**
+    ![Run IDA Export](public/ida-run-script.PNG "Run ida_export.py script")
 
 3. Input the file path for the JSON file that will be created
 
 4. Click Ok. Analysis data will be written to the JSON file
 
-![IDA Analysis Data JSON](public/ida-exported-json.PNG "IDA Analysis Data JSON")
+    **IDA Analysis Data JSON**
+    ![IDA Analysis Data JSON](public/ida-exported-json.PNG "IDA Analysis Data JSON")
 
 5. Open your BN database for the same binary (or load a binary and allow analysis to complete)
 6. Click `tools->Import data to BN`
 
-![Run Binja Import](public/bn-tools-import-data.PNG "Run binja_import.py Plugin")
+    **Run Binja Import Plugin**
+    ![Run Binja Import](public/bn-tools-import-data.PNG "Run binja_import.py Plugin")
 
 7. Enter the file path to the JSON file
 
-![Enter JSON File](public/bn-import-file-input.PNG "File path to IDA JSON")
+    **Supply File Path to IDA JSON**
+    ![Enter JSON File](public/bn-import-file-input.PNG "File path to IDA JSON")
 
 8. Click ok. Your database will then be updated with the analysis data from IDA.
 
@@ -78,12 +82,15 @@ you to define the offsets for sections contained in the exported IDA JSON data. 
 if the default processor has been set. If it has not been set, a input box will appear. The input box prompts the user
 to define the default processor and set the base address for each section found in the JSON file.
 
+**Binja Import Prompt for Defining Sections**
 ![Defining Sections](public/flat-file-section-definition.PNG "Defining Sections")
 
 Sections can be defined manually using the Binary Ninja API and the script console, if needed. To create a section, use
 `BinaryView.add_user_section(name, start, length)`. To validate that the section was created, navigate to linear view
 and scroll to the top of the binary.
 
+**Add a Section Manually**
 ![Create Section Manually](public/bn-add-section.PNG "BN Add User Section")
 
+**BN Sections View**
 ![BN Sections](public/bn-sections.PNG "BN Sections")
