@@ -34,7 +34,7 @@ def base_addr_off_section(sections, bv, addr):
     """
     ida_section_start = None
     section_name = None
-    for name, section in sections.iteritems():
+    for name, section in sections.items():
         if addr >= int(section["start"]) and addr <= int(section["end"]):
             ida_section_start = int(section["start"])
             section_name = name
@@ -42,13 +42,13 @@ def base_addr_off_section(sections, bv, addr):
 
     # make sure the section was found (this check should always pass)
     if section_name is None:
-        print "Section not found in IDA analysis data for addr: {:08x}".format(addr)
+        print("Section not found in IDA analysis data for addr: {:08x}".format(addr))
         return None
 
     # retrieve section start in BN
     bn_section = bv.get_section_by_name(section_name)
     if bn_section is None:
-        print "Section not found in BN - name:{} addr:{:08x}".format(section_name, addr)
+        print("Section not found in BN - name:{} addr:{:08x}".format(section_name, addr))
         return None
 
     # adjust if needed
@@ -72,9 +72,9 @@ def open_json_file(json_file):
 def set_structs(bv, structs):
     """Import IDA structures into BNDB
     """
-    for struct_name, struct_info in structs.iteritems():
+    for struct_name, struct_info in structs.items():
         curr_struct = types.Structure()
-        for member_name, member_info in struct_info["members"].iteritems():
+        for member_name, member_info in struct_info["members"].items():
             typ, _ = bv.parse_type_string("{}".format(member_info["type"]))
             curr_struct.insert(int(member_info["offset"]), typ, member_name)
 
@@ -83,7 +83,7 @@ def set_structs(bv, structs):
 def set_symbols(bv, names, sections):
     """Set IDA symbol names in BN database
     """
-    for addr, name in names.iteritems():
+    for addr, name in names.items():
         addr = base_addr_off_section(sections, bv, int(addr))
         if addr is None:
             continue
@@ -93,7 +93,7 @@ def set_symbols(bv, names, sections):
 def set_comments(bv, comments, sections):
     """Set IDA comments in BN database
     """
-    for func_addr, current_function in comments.iteritems():
+    for func_addr, current_function in comments.items():
         func_addr = base_addr_off_section(sections, bv, int(func_addr))
         if func_addr is None:
             continue
@@ -108,7 +108,7 @@ def set_comments(bv, comments, sections):
                 continue
 
         func.comment = current_function["comment"]
-        for addr, instr_comment in current_function["comments"].iteritems():
+        for addr, instr_comment in current_function["comments"].items():
             addr = base_addr_off_section(sections, bv, int(addr))
             if addr is None:
                 continue
@@ -133,7 +133,7 @@ def set_flat_file_params(bv, sections):
     arch_field = ChoiceField("Default Platform", arch_choices)
     input_fields = [arch_field, ]
     section_fields = {}
-    for name, section in sections.iteritems():
+    for name, section in sections.items():
         section_fields[name] = IntegerField(name + " offset")
         input_fields.append(section_fields[name])
 
@@ -143,7 +143,7 @@ def set_flat_file_params(bv, sections):
     bv.platform = archs[arch_choices[arch_field.result]].standalone_platform
 
     # create the sections
-    for name, section_field in section_fields.iteritems():
+    for name, section_field in section_fields.items():
         bv.add_user_section(name, section_field.result, sections[name]["end"] - sections[name]["start"])
 
 def import_ida(json_file, bv):
