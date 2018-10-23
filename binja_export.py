@@ -83,8 +83,8 @@ def export_bn(json_file, bv):
     json_array["comments"]  = get_comments(bv)
 
     try:
-        with open(json_file, "wb+") as f:
-            f.write(json.dumps(json_array, indent=4))
+        with open(json_file, "w+") as f:
+            json.dump(json_array, f, indent=4)
     except Exception as ex:
         return False, "Failed to create JSON file {} {}".format(json_file, ex)
 
