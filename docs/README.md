@@ -1,6 +1,7 @@
 ## bnida allows you to transfer analysis data between IDA Pro and Binary Ninja!
 
 ## How does it work?
+
 bnida consists of IDA Pro and Binary Ninja plugins that export and import analysis data from a JSON file. This is done
 by leveraging each platform's Python API. Plugin files
 include:
@@ -20,16 +21,16 @@ include:
 ## Getting Started
 
 ### Setup and Configuration
-To use bnida, clone the [repository](https://github.com/zznop/bnida). Then, move `binja_export.py` and `binja_import.py`
-to your Binary Ninja plugins directory. On Linux, this directory is located at `~/.binaryninja/plugins/`. On Windows,
-the BN plugin directory can be found in `%APPDATA%\Binary Ninja\plugins`.For the IDA plugins (`ida_export.py` and 
-`ida_import.py`), I recommend moving them to `C:\Program Files\IDA 7.1\plugins` (Windows) and configuring a hotkey to
-execute each IDAPython script. To do so, follow
-[this](http://www.mopsled.com/2016/add-shortcut-for-idapython-script-ida-pro/) blog post. If you don't want to bother
-with that, no problem. You can run `ida_export.py` or `ida_import.py` by simply typing `Alt+F7` to execute a script
-file.
+
+To use bnida, clone the [repository](https://github.com/zznop/bnida) into your Binary Ninja plugins folder. Then,
+I recommend moving the IDA plugins (`ida_export.py` and `ida_import.py`), to `C:\Program Files\IDA 7.1\plugins` (Windows)
+and configure a hotkey to execute each IDAPython script. To do so, follow
+[this](http://www.mopsled.com/2016/add-shortcut-for-idapython-script-ida-pro/) blog post.
+If you don't want to bother with that, no problem. You can run `ida_export.py` or `ida_import.py` by simply typing
+`Alt+F7` to execute a script file.
 
 ### IDA to Binary Ninja
+
 1. Open your IDA database (or load a binary and allow analysis to complete)
 
 2. Type `Alt+F7` and select the `ida_export.py`
@@ -77,6 +78,7 @@ BN to IDA transfers require a similar process. The steps are as follows:
 ## Additional Information
 
 ### Handling Flat Files
+
 bnida calculates offsets between IDA and BN relative to the base address of the symbol's section. This is done to 
 account for potential base address differences between the platforms. This design works excellent with PE and ELF 
 executable file formats where the section names are defined in headers (which ensures section names are uniform).
