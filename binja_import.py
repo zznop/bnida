@@ -168,5 +168,3 @@ def import_ida_in_background(bv):
     options = GetOptions()
     background_task = ImportIDAInBackground(bv, options)
     background_task.start()
-
-PluginCommand.register("Import data from IDA", "Import data from IDA", import_ida_in_background)
