@@ -1,100 +1,135 @@
-"""binja_export.py: exports analysis data from a BN database to a json file"""
-
-__author__      = "zznop"
-__copyright__   = "Copyright 2018, zznop0x90@gmail.com"
-__license__     = "WTFPL"
-
 import json
 from optparse import OptionParser
 from binaryninja import *
 
-class GetOptions:
+"""
+Exports analysis data from a BN database to a bnida JSON file
+"""
+
+__author__      = 'zznop'
+__copyright__   = 'Copyright 2018, zznop0x90@gmail.com'
+__license__     = 'WTFPL'
+
+class GetOptions(object):
     def __init__(self):
-        json_file = SaveFileNameField("Export json file")
-        get_form_input([json_file], "BN Export Options")
+        json_file = SaveFileNameField('Export json file')
+        get_form_input([json_file], 'BN Export Options')
         if json_file.result == '':
             self.json_file = None
         else:
             self.json_file = json_file.result
 
-class ExportBNInBackground(BackgroundTaskThread):
+class ExportInBackground(BackgroundTaskThread):
     def __init__(self, bv, options):
         global task
-        BackgroundTaskThread.__init__(self, "Exporting data from BN", False)
+        BackgroundTaskThread.__init__(self, 'Exporting data from BN', False)
         self.json_file = options.json_file
         self.options   = options
         self.bv        = bv
         task           = self
 
+    def get_sections(self):
+        """
+        Export sections
+
+        :return: Dictionary of sections
+        """
+
+        sections = {}
+        for section_name in self.bv.sections:
+            section = self.bv.get_section_by_name(section_name)
+            sections[section.name] = {
+                'start' : section.start,
+                'end' : section.end
+            }
+
+        return sections
+
+    def get_names(self):
+        """
+        Export symbols
+
+        :return: Dictionary of names
+        """
+
+        symbols = {}
+        for symbol in self.bv.get_symbols():
+            symbols[symbol.address] = symbol.name
+        return symbols
+
+    def get_functions(self):
+        """
+        Export functions
+
+        :return: Dictionary of functions
+        """
+
+        functions = []
+        for func in self.bv.functions:
+            functions.append(func.start)
+        return functions
+
+    def get_function_comments(self):
+        """
+        Export function comments
+
+        :return: Dictionary of function comments
+        """
+
+        comments = {}
+        for func in self.bv:
+            current_function = {}
+            if func.comment:
+                comments[func.start] = func.comment
+
+        return comments
+
+    def get_line_comments(self):
+        """
+        Export line comments
+
+        :return: Dictionary of line comments
+        """
+
+        comments = {}
+        for section_name in self.bv.sections:
+            section = self.bv.get_section_by_name(section_name)
+            for addr in range(section.start, section.end):
+                comment = self.bv.get_comment_at(addr)
+                if comment:
+                    comments[addr] = comment
+
+        return comments
+
     def run(self):
-        (success, error_message) = export_bn(self.options.json_file, self.bv)
-        if not success:
-            log_error(error_message)
+        """
+        Export analysis data to bnida JSON file
+        """
 
-def get_functions(bv):
-    """Populate dictionary of function names and offsets
-    """
-    functions = {}
-    for func in bv.functions:
-        functions[func.start] = func.name
-    return functions
+        print('[*] Exporting analysis data to {}'.format(self.options.json_file))
+        json_array                   = {}
+        json_array['sections']       = self.get_sections()
+        json_array['names']          = self.get_names()
+        json_array['functions']      = self.get_functions()
+        json_array['func_comments']  = self.get_function_comments()
+        json_array['line_comments']  = self.get_line_comments()
 
-def get_symbols(bv):
-    """Populate dictionary of symbol names
-    """
-    symbols = {}
-    for symbol in bv.get_symbols():
-        symbols[symbol.address] = symbol.name
-    return symbols
-
-def get_comments(bv):
-    """Populate dictionary of comments
-    """
-    comments = {}
-    for func in bv:
-        current_function = {}
-        current_function["comment"] = func.comment
-        current_function["comments"] = {}
-        for addr in func.comments:
-            current_function["comments"][addr] = func.get_comment_at(addr)
-        comments[func.start] = current_function
-
-    return comments
-
-def get_sections(bv):
-    """Populate dictionary of sections
-    """
-    sections = {}
-    for section_name in bv.sections:
-        section = bv.get_section_by_name(section_name)
-        sections[section.name] = {
-            'start' : section.start,
-            'end' : section.end
-        }
-
-    return sections
-
-def export_bn(json_file, bv):
-    """Construct json array of everything we want to export
-    """
-    json_array              = {}
-    json_array["sections"]  = get_sections(bv)
-    json_array["names"]     = get_symbols(bv)
-    json_array["comments"]  = get_comments(bv)
-
-    try:
-        with open(json_file, "w+") as f:
+        with open(self.options.json_file, 'w+') as f:
             json.dump(json_array, f, indent=4)
-    except Exception as ex:
-        return False, "Failed to create JSON file {} {}".format(json_file, ex)
 
-    return True, None
+        print('[+] Done exporting analysis data')
 
-def export_bn_in_background(bv):
-    """Export data in background from BN UI
+def export_data_in_background(bv):
     """
+    Export data in background from BN UI
+    """
+
     options = GetOptions()
-    background_task = ExportBNInBackground(bv, options)
+    background_task = ExportInBackground(bv, options)
     background_task.start()
 
-PluginCommand.register("Export data from BN", "Export data from BN", export_bn_in_background)
+PluginCommand.register(
+    'bnida: Export data',
+    'bnida: Export data',
+    export_data_in_background
+)
