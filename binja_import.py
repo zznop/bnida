@@ -1,170 +1,233 @@
-"""binja_import.py: imports analysis data into a BN databsae from a json file"""
-
-__author__      = "zznop"
-__copyright__   = "Copyright 2018, zznop0x90@gmail.com"
-__license__     = "WTFPL"
-
 import json
 from binaryninja import *
 
-class GetOptions:
+"""
+Imports analysis data from a bnida json file into a Binary Ninja database
+"""
+
+__author__      = 'zznop'
+__copyright__   = 'Copyright 2018, zznop0x90@gmail.com'
+__license__     = 'WTFPL'
+
+
+class GetOptions(object):
+    """
+    This class handles user input to specify path to JSON file
+    """
+
     def __init__(self):
-        json_file = OpenFileNameField("Import json file")
-        get_form_input([json_file], "BN Import Options")
+        json_file = OpenFileNameField('Import json file')
+        get_form_input([json_file], 'BN Import Options')
         if json_file.result == '':
             self.json_file = None
         else:
             self.json_file = json_file.result
 
-class ImportIDAInBackground(BackgroundTaskThread):
+
+class ImportInBackground(BackgroundTaskThread):
+    """
+    This class imports the data into the BN database
+    """
+
     def __init__(self, bv, options):
         global task
-        BackgroundTaskThread.__init__(self, "Importing data from IDA", False)
+        BackgroundTaskThread.__init__(self, 'Importing data from bnida JSON file', False)
         self.json_file = options.json_file
         self.bv = bv
         self.options = options
 
-    def run(self):
-        (success, error_message) = import_ida(self.options.json_file, self.bv)
-        if not success:
-            log_error(error_message)
+    def adjust_addr(self, sections, addr):
+        """
+        Adjust the address if there are differences in section base addresses
 
-def base_addr_off_section(sections, bv, addr):
-    """Adjust the address if there are differences in section base addresses
-    """
-    ida_section_start = None
-    section_name = None
-    for name, section in sections.items():
-        if addr >= int(section["start"]) and addr <= int(section["end"]):
-            ida_section_start = int(section["start"])
-            section_name = name
-            break
+        :param sections: Dictionary of sections
+        :param addr: Address
+        :return: Base address of section
+        """
 
-    # make sure the section was found (this check should always pass)
-    if section_name is None:
-        print("Section not found in IDA analysis data for addr: {:08x}".format(addr))
-        return None
+        section_start = None
+        section_name = None
+        for name, section in sections.items():
+            if addr >= int(section['start']) and addr <= int(section['end']):
+                section_start = int(section['start'])
+                section_name = name
+                break
 
-    # retrieve section start in BN
-    bn_section = bv.get_section_by_name(section_name)
-    if bn_section is None:
-        print("Section not found in BN - name:{} addr:{:08x}".format(section_name, addr))
-        return None
+        # Make sure the section was found (this check should always pass)
+        if section_name is None:
+            print('Section not found in analysis data for addr: {:08x}'.format(addr))
+            return None
 
-    # adjust if needed
-    return addr - ida_section_start + bn_section.start
+        # Retrieve section start in BN
+        bn_section = self.bv.get_section_by_name(section_name)
+        if bn_section is None:
+            print('Section not found in BN - name:{} addr:{:08x}'.format(section_name, addr))
+            return None
 
-def open_json_file(json_file):
-    """Open the json file and load the json object
-    """
-    json_array = None
-    if json_file is None:
-        return json_array, "No json file specified"
-    
-    try:
-        f = open(json_file, "rb")
-        json_array = json.load(f)
-    except Exception as e:
-        return json_array, "Failed to parse json file {} {}".format(json_file, e)
+        # Adjust if needed
+        return addr - section_start + bn_section.start
 
-    return json_array
+    def open_json_file(self, json_file):
+        """
+        Open and load the json file
 
-def set_structs(bv, structs):
-    """Import IDA structures into BNDB
-    """
-    for struct_name, struct_info in structs.items():
-        curr_struct = types.Structure()
-        for member_name, member_info in struct_info["members"].items():
-            typ, _ = bv.parse_type_string("{}".format(member_info["type"]))
-            curr_struct.insert(int(member_info["offset"]), typ, member_name)
+        :param json_file: Path to JSON file
+        :return: Dictionary of JSON file content
+        """
 
-        bv.define_user_type(struct_name.encode('utf-8'), Type.structure_type(curr_struct))
+        f = open(json_file, 'rb')
+        return json.load(f)
 
-def set_symbols(bv, names, sections):
-    """Set IDA symbol names in BN database
-    """
-    for addr, name in names.items():
-        addr = base_addr_off_section(sections, bv, int(addr))
-        if addr is None:
-            continue
+    def import_functions(self, functions, sections):
+        """
+        Create functions from bnida analysis data
 
-        bv.define_user_symbol(Symbol(SymbolType.DataSymbol, addr, name))
+        :param functions: Array of function addrs
+        :param sections: Dictonary of sections
+        """
 
-def set_comments(bv, comments, sections):
-    """Set IDA comments in BN database
-    """
-    for func_addr, current_function in comments.items():
-        func_addr = base_addr_off_section(sections, bv, int(func_addr))
-        if func_addr is None:
-            continue
-
-        func = bv.get_function_at(func_addr)
-
-        # Make a function if it doesn't exist
-        if func is None:
-            bv.add_function(func_addr)
-            func = bv.get_function_at(func_addr)
-            if func is None:
-                continue
-
-        func.comment = current_function["comment"]
-        for addr, instr_comment in current_function["comments"].items():
-            addr = base_addr_off_section(sections, bv, int(addr))
+        for addr in functions:
+            addr = self.adjust_addr(sections, int(addr))
             if addr is None:
                 continue
 
-            func.set_comment_at(addr, instr_comment)
+            if self.bv.get_function_at(addr) is None:
+                self.bv.add_function(addr)
 
-def get_architectures():
-    """Return a key/dict of supported processors
+    def import_function_comments(self, comments, sections):
+        """
+        Import function comments into BN database
+
+        :param comments: Dictionary of function comments
+        :param sections: Dictionary of sections
+        """
+
+        for addr, comment in comments.items():
+            addr = self.adjust_addr(sections, int(func_addr))
+            if addr is None:
+                continue
+
+            func = self.bv.get_function_at(addr)
+            if func is None:
+                continue
+
+            func.comment = comment
+
+    def import_line_comments(self, comments, sections):
+        """
+        Import line comments into BN database
+
+        :param comments: Dictionary of line comments
+        :param sections: Dictionary of sections
+        """
+
+        for addr, comment in comments.items():
+            addr = self.adjust_addr(sections, int(addr))
+            if addr is None:
+                continue
+
+            self.bv.set_comment_at(addr, comment)
+
+    def import_structures(self, structs):
+        """
+        Import structures into BN database
+
+        :param structs: Dictionary of structures
+        """
+
+        for struct_name, struct_info in structs.items():
+            struct = types.Structure()
+            for member_name, member_info in struct_info['members'].items():
+                typ, _ = self.bv.parse_type_string('{}'.format(member_info['type']))
+                struct.insert(int(member_info['offset']), typ, member_name)
+
+            self.bv.define_user_type(struct_name, Type.structure_type(struct))
+
+    def import_names(self, names, sections):
+        """
+        Import names into BN database
+
+        :param names: Dictionary of symbol information
+        :param sections: Dictionary of sections
+        """
+
+        for addr, name in names.items():
+            addr = self.adjust_addr(sections, int(addr))
+            if addr is None:
+                continue
+
+            if self.bv.get_function_at(addr):
+                self.bv.define_user_symbol(Symbol(SymbolType.FunctionSymbol, addr, name))
+            else:
+                self.bv.define_user_symbol(Symbol(SymbolType.DataSymbol, addr, name))
+
+    def get_architectures(self):
+        """
+        Get dictionary of supported architectures
+
+        :return: Dictionary of supported architectures
+        """
+
+        archs = {}
+        for arch in list(Architecture):
+            archs[arch.name] = arch
+
+        return archs
+
+    def set_raw_binary_params(self, sections):
+        """
+        Prompt the user for the processor and create sections
+
+        :param sections: Dictionary of sections
+        """
+
+        archs = self.get_architectures()
+        arch_choices = list(archs.keys())
+        arch_field = ChoiceField('Default Platform', arch_choices)
+        input_fields = [arch_field, ]
+        section_fields = {}
+        for name, section in sections.items():
+            section_fields[name] = IntegerField(name + ' offset')
+            input_fields.append(section_fields[name])
+
+        get_form_input(input_fields, 'Processor and Sections')
+
+        # set the default platform
+        self.bv.platform = archs[arch_choices[arch_field.result]].standalone_platform
+
+        # create the sections
+        for name, section_field in section_fields.items():
+            self.bv.add_user_section(name, section_field.result, sections[name]['end'] - sections[name]['start'])
+
+    def run(self):
+        """
+        Open JSON file and apply analysis data to BN database
+        """
+
+        json_array = self.open_json_file(self.options.json_file)
+        if self.bv.platform is None:
+            self.set_raw_binary_params(json_array['sections'])
+
+        self.import_functions(json_array['functions'], json_array['sections'])
+        self.import_function_comments(json_array['func_comments'], json_array['sections'])
+        self.import_line_comments(json_array['line_comments'], json_array['sections'])
+        self.import_names(json_array['names'], json_array['sections'])
+        self.import_structures(json_array['structs'])
+        self.bv.update_analysis_and_wait()
+
+def import_data_in_background(bv):
     """
-    archs = {}
-    for arch in list(Architecture):
-        archs[arch.name] = arch
+    Registered plugin command handler
 
-    return archs
-
-def set_flat_file_params(bv, sections):
+    :param bv: Binary view
     """
-    Prompt the user for section offsets and default processor, and set them
-    """
-    archs = get_architectures()
-    arch_choices = list(archs.keys())
-    arch_field = ChoiceField("Default Platform", arch_choices)
-    input_fields = [arch_field, ]
-    section_fields = {}
-    for name, section in sections.items():
-        section_fields[name] = IntegerField(name + " offset")
-        input_fields.append(section_fields[name])
 
-    get_form_input(input_fields, "Processor and Sections")
-
-    # set the default platform
-    bv.platform = archs[arch_choices[arch_field.result]].standalone_platform
-
-    # create the sections
-    for name, section_field in section_fields.items():
-        bv.add_user_section(name, section_field.result, sections[name]["end"] - sections[name]["start"])
-
-def import_ida(json_file, bv):
-    """Import IDA analysis data into BN database
-    """
-    json_array = open_json_file(json_file)
-    if json_array is None:
-        return False
-
-    if bv.platform is None:
-        set_flat_file_params(bv, json_array["sections"])
-
-    set_comments(bv, json_array["comments"], json_array["sections"])
-    set_symbols(bv, json_array["names"], json_array["sections"])
-    #set_structs(bv, json_array["structs"])
-    bv.update_analysis_and_wait()
-    return True, None
-
-def import_ida_in_background(bv):
-    """Import IDA analysis data in background thread
-    """
     options = GetOptions()
-    background_task = ImportIDAInBackground(bv, options)
+    background_task = ImportInBackground(bv, options)
     background_task.start()
+
+PluginCommand.register(
+    "bnida: Import data",
+    "bnida: Import data",
+    import_data_in_background
+)
