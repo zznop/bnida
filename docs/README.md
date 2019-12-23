@@ -1,14 +1,35 @@
-## bnida allows you to transfer analysis data between IDA Pro and Binary Ninja!
+# Overview
 
-## How does it work?
+bnida consists of (2) IDA Pro scripts and (2) Binary Ninja (BN) plugins that use IDAPython and BN Python API's to do
+"one-shot" transfers of analysis data across IDA and BN databases. These scripts/plugins include:
 
-bnida consists of IDA Pro and Binary Ninja plugins that export and import analysis data from a JSON file. This is done
-by leveraging each platform's Python API. Plugin files
-include:
-* `binja_export.py` - BNDB to JSON file
-* `binja_import.py` - JSON file to BNDB
-* `ida_export.py` - IDB to JSON file
-* `ida_import.py` - JSON file to IDB
+* `binja_export.py` - Exports analysis data from a BN database to a bnida JSON file.
+* `binja_import.py` - Imports analysis data from a bnida JSON file into a BN database.
+* `ida_export.py` - Exports analysis data from an IDA database to a bnida JSON file.
+* `ida_import.py` - Imports analysis data from a bnida JSON file into a IDA database.
+
+All four scripts are designed to support a single, common JSON file format. This not only allows for transfers between
+BN and IDA platorms, but also BN<->BN and IDA<->IDA too. This is especially useful if there is a desire to share
+analysis data with someone using an older version of IDA who can't open your newer IDA database. The JSON file itself
+is also easy to digest with custom tooling, since almost every programming language contains a JSON library.
+
+# Installation
+
+This section describes how to install bnida scripts on a Windows operating system. The process is similar on Linux.
+
+1. Clone the [repository](https://github.com/zznop/bnida).
+
+2. Copy the IDA scripts to `C:\Program Files\IDA {version}\plugins` and configure a hotkey. (or keep them where they are
+if you prefer to run them as scripts with `Alt+F7`).
+
+3. Copy the BN plugins to the Binary Ninja plugins folder at `%AppData%\Binary Ninja\plugins`
+
+Optionally, you can keep the files where they are in the cloned repository and simply create symbolic links.
+
+```
+C:\Users\zznop\AppData\Roaming\Binary Ninja\plugins>mklink binja_export.py C:\Users\zznop\projects\bnida\binja\binja_export.py
+symbolic link created for binja_export.py <<===>> C:\Users\zznop\projects\bnida\binja\binja_export.py
+```
 
 ### Before
 
