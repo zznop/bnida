@@ -103,7 +103,7 @@ class ImportInBackground(BackgroundTaskThread):
         """
 
         for addr, comment in comments.items():
-            addr = self.adjust_addr(sections, int(func_addr))
+            addr = self.adjust_addr(sections, int(addr))
             if addr is None:
                 continue
 
