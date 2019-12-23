@@ -11,7 +11,8 @@ Exports analysis data from IDA to a bnida json file
 
 __author__    = 'zznop'
 __copyright__ = 'Copyright 2018, zznop0x90@gmail.com'
-__license__   = 'WTFPL'
+__license__   = 'MIT'
+
 
 def get_single_comment(regular, repeatable):
     """
@@ -47,7 +48,7 @@ def get_single_line_comment(ea):
     Get line comment
 
     :param ea: Function offset
-    :return: comment string or None
+    :return: Comment string or None
     """
 
     regular = ida_bytes.get_cmt(ea, False)
@@ -59,7 +60,7 @@ def get_function_comments():
     """
     Get function comments from IDA database
 
-    :return: A dictionary of function comments
+    :return: Dict containing function comments
     """
 
     comments = {}
@@ -74,7 +75,7 @@ def get_functions():
     """
     Get function start addresses
 
-    :return: An array of function addresses
+    :return: Array containing function addresses
     """
 
     func_addrs = []
@@ -87,7 +88,7 @@ def get_line_comments():
     """
     Iterate through every address in a segment and check for comments
 
-    :return: Dictionary of comments
+    :return: Dict containing line comments
     """
 
     last_comment = ''
@@ -110,7 +111,8 @@ def get_line_comments():
 def get_names():
     """
     Get symbols from IDA database
-    :return: Dictionary of symbols
+
+    :return: Dict containing symbol information
     """
 
     symbols = {}
@@ -123,7 +125,7 @@ def get_sections():
     """
     Get section names and start/end addrs from IDA database
 
-    :return: Dictionary containing segment information
+    :return: Dict containing section info
     """
 
     sections = {}
@@ -183,7 +185,7 @@ def get_struct_members(struct, sid):
 
     :param struct: Structure object
     :param sid: Structure ID
-    :return: Dictionary containing structure member information
+    :return: Dict containing structure member information
     """
 
     members = {}
@@ -204,7 +206,7 @@ def get_structs():
     """
     Get structures from IDA database
 
-    :return: Dictionary of structures
+    :return: Dict containing structure info
     """
 
     structs = {}
