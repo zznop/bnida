@@ -11,7 +11,8 @@ Imports analysis data from a bnida JSON file to IDA
 
 __author__    = 'zznop'
 __copyright__ = 'Copyright 2018, zznop0x90@gmail.com'
-__license__   = 'WTFPL'
+__license__   = 'MIT'
+
 
 def sanitize_name(name):
     """
@@ -29,9 +30,9 @@ def adjust_addr(sections, addr):
     """
     Adjust the address if there are differences in section base addresses
 
-    :param sections: Dictionary of sections
-    :param addr: Address
-    :return: base address of section
+    :param sections: Dictionary containing section info
+    :param addr: Address that might need adjusted
+    :return: Adjusted address
     """
 
     bn_section_start = None
@@ -62,7 +63,7 @@ def import_functions(functions, sections):
     Create functions from bnida analysis data
 
     :param functions: Array of function addrs
-    :param sections: Dictonary of sections
+    :param sections: Dict containing section info
     """
 
     for addr in functions:
@@ -77,8 +78,8 @@ def import_function_comments(comments, sections):
     """
     Import function comments into IDA
 
-    :param comments: Dictionary of function comments
-    :param sections: Dictionary of sections
+    :param comments: Dict containing function comments
+    :param sections: Dict containing section info
     """
 
     for addr, comment in comments.items():
@@ -97,8 +98,8 @@ def import_line_comments(comments, sections):
     """
     Import line comments
 
-    :param comments: Dictionary of comments
-    :param sections: Dictionary of sections
+    :param comments: Dict containing line comments
+    :param sections: Dict containing section info
     """
 
     for addr, comment in comments.items():
@@ -109,8 +110,8 @@ def import_names(names, sections):
     """
     Import symbol names
 
-    :param names: Dictionary of names
-    :param sections: Dictionary of sections
+    :param names: Dict containing symbol info
+    :param sections: Dict containing section info
     """
 
     for addr, name in names.items():
@@ -127,7 +128,7 @@ def get_json(json_file):
     Read bnida JSON file
 
     :param json_file: Path to json file
-    :return: JSON array dictionary
+    :return: Dict containing JSON file content
     """
 
     json_array = None

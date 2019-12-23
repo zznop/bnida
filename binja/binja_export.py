@@ -8,7 +8,8 @@ Exports analysis data from a BN database to a bnida JSON file
 
 __author__      = 'zznop'
 __copyright__   = 'Copyright 2018, zznop0x90@gmail.com'
-__license__     = 'WTFPL'
+__license__     = 'MIT'
+
 
 class GetOptions(object):
     def __init__(self):
@@ -32,7 +33,7 @@ class ExportInBackground(BackgroundTaskThread):
         """
         Export sections
 
-        :return: Dictionary of sections
+        :return: Dict containing section info
         """
 
         sections = {}
@@ -49,7 +50,7 @@ class ExportInBackground(BackgroundTaskThread):
         """
         Export symbols
 
-        :return: Dictionary of names
+        :return: Dict containing symbol info
         """
 
         symbols = {}
@@ -61,7 +62,7 @@ class ExportInBackground(BackgroundTaskThread):
         """
         Export functions
 
-        :return: Dictionary of functions
+        :return: Dict containing function info
         """
 
         functions = []
@@ -73,7 +74,7 @@ class ExportInBackground(BackgroundTaskThread):
         """
         Export function comments
 
-        :return: Dictionary of function comments
+        :return: Dict containing function comments
         """
 
         comments = {}
@@ -88,7 +89,7 @@ class ExportInBackground(BackgroundTaskThread):
         """
         Export line comments
 
-        :return: Dictionary of line comments
+        :return: Dict containing line comments
         """
 
         comments = {}
@@ -98,6 +99,10 @@ class ExportInBackground(BackgroundTaskThread):
                 comment = self.bv.get_comment_at(addr)
                 if comment:
                     comments[addr] = comment
+
+        for func in self.bv:
+            for addr in func.comments:
+                comments[addr] = func.get_comment_at(addr)
 
         return comments
 
@@ -113,6 +118,7 @@ class ExportInBackground(BackgroundTaskThread):
         json_array['functions']      = self.get_functions()
         json_array['func_comments']  = self.get_function_comments()
         json_array['line_comments']  = self.get_line_comments()
+        json_array['structs']        = {} # TODO
 
         with open(self.options.json_file, 'w+') as f:
             json.dump(json_array, f, indent=4)

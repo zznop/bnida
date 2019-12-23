@@ -7,7 +7,7 @@ Imports analysis data from a bnida json file into a Binary Ninja database
 
 __author__      = 'zznop'
 __copyright__   = 'Copyright 2018, zznop0x90@gmail.com'
-__license__     = 'WTFPL'
+__license__     = 'MIT'
 
 
 class GetOptions(object):
@@ -40,9 +40,9 @@ class ImportInBackground(BackgroundTaskThread):
         """
         Adjust the address if there are differences in section base addresses
 
-        :param sections: Dictionary of sections
-        :param addr: Address
-        :return: Base address of section
+        :param sections: Dict containing section info
+        :param addr: Address that might need adjusted
+        :return: Adjusted offset
         """
 
         section_start = None
@@ -72,7 +72,7 @@ class ImportInBackground(BackgroundTaskThread):
         Open and load the json file
 
         :param json_file: Path to JSON file
-        :return: Dictionary of JSON file content
+        :return: Dict containing JSON file content
         """
 
         f = open(json_file, 'rb')
@@ -83,7 +83,7 @@ class ImportInBackground(BackgroundTaskThread):
         Create functions from bnida analysis data
 
         :param functions: Array of function addrs
-        :param sections: Dictonary of sections
+        :param sections: Dict containing section info
         """
 
         for addr in functions:
@@ -98,8 +98,8 @@ class ImportInBackground(BackgroundTaskThread):
         """
         Import function comments into BN database
 
-        :param comments: Dictionary of function comments
-        :param sections: Dictionary of sections
+        :param comments: Dict containing function comments
+        :param sections: Dict containing section info
         """
 
         for addr, comment in comments.items():
@@ -115,10 +115,12 @@ class ImportInBackground(BackgroundTaskThread):
 
     def import_line_comments(self, comments, sections):
         """
-        Import line comments into BN database
+        Import line comments into BN database. Binary Ninja uses BinaryView.set_function_at or Function.set_comment_at
+        for line comments in data sections or line comments in Functions, respectively. Therefore, we check if the
+        addr is contained in a function and use the appropriate API.
 
-        :param comments: Dictionary of line comments
-        :param sections: Dictionary of sections
+        :param comments: Dict containing line comments
+        :param sections: Dict containing section info
         """
 
         for addr, comment in comments.items():
@@ -126,13 +128,19 @@ class ImportInBackground(BackgroundTaskThread):
             if addr is None:
                 continue
 
-            self.bv.set_comment_at(addr, comment)
+            funcs = self.bv.get_functions_containing(addr)
+            if funcs is None:
+                self.bv.set_comment_at(addr, comment)
+                continue
+
+            for func in funcs:
+                func.set_comment_at(addr, comment)
 
     def import_structures(self, structs):
         """
         Import structures into BN database
 
-        :param structs: Dictionary of structures
+        :param structs: Dict containing structure/type info
         """
 
         for struct_name, struct_info in structs.items():
@@ -147,8 +155,8 @@ class ImportInBackground(BackgroundTaskThread):
         """
         Import names into BN database
 
-        :param names: Dictionary of symbol information
-        :param sections: Dictionary of sections
+        :param names: Dict containing symbol info
+        :param sections: Dict containing section info
         """
 
         for addr, name in names.items():
@@ -165,7 +173,7 @@ class ImportInBackground(BackgroundTaskThread):
         """
         Get dictionary of supported architectures
 
-        :return: Dictionary of supported architectures
+        :return: Dictionary containing supported architectures
         """
 
         archs = {}
@@ -178,7 +186,7 @@ class ImportInBackground(BackgroundTaskThread):
         """
         Prompt the user for the processor and create sections
 
-        :param sections: Dictionary of sections
+        :param sections: Dictionary containing section info
         """
 
         archs = self.get_architectures()
@@ -192,10 +200,10 @@ class ImportInBackground(BackgroundTaskThread):
 
         get_form_input(input_fields, 'Processor and Sections')
 
-        # set the default platform
+        # Set the default platform
         self.bv.platform = archs[arch_choices[arch_field.result]].standalone_platform
 
-        # create the sections
+        # Create the sections
         for name, section_field in section_fields.items():
             self.bv.add_user_section(name, section_field.result, sections[name]['end'] - sections[name]['start'])
 
@@ -204,6 +212,7 @@ class ImportInBackground(BackgroundTaskThread):
         Open JSON file and apply analysis data to BN database
         """
 
+        print('[*] Importing analysis data from {}'.format(self.options.json_file))
         json_array = self.open_json_file(self.options.json_file)
         if self.bv.platform is None:
             self.set_raw_binary_params(json_array['sections'])
@@ -214,6 +223,7 @@ class ImportInBackground(BackgroundTaskThread):
         self.import_names(json_array['names'], json_array['sections'])
         self.import_structures(json_array['structs'])
         self.bv.update_analysis_and_wait()
+        print('[+] Done importing analysis data')
 
 def import_data_in_background(bv):
     """
