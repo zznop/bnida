@@ -182,31 +182,6 @@ class ImportInBackground(BackgroundTaskThread):
 
         return archs
 
-    def set_raw_binary_params(self, sections):
-        """
-        Prompt the user for the processor and create sections
-
-        :param sections: Dictionary containing section info
-        """
-
-        archs = self.get_architectures()
-        arch_choices = list(archs.keys())
-        arch_field = ChoiceField('Default Platform', arch_choices)
-        input_fields = [arch_field, ]
-        section_fields = {}
-        for name, section in sections.items():
-            section_fields[name] = IntegerField(name + ' offset')
-            input_fields.append(section_fields[name])
-
-        get_form_input(input_fields, 'Processor and Sections')
-
-        # Set the default platform
-        self.bv.platform = archs[arch_choices[arch_field.result]].standalone_platform
-
-        # Create the sections
-        for name, section_field in section_fields.items():
-            self.bv.add_user_section(name, section_field.result, sections[name]['end'] - sections[name]['start'])
-
     def run(self):
         """
         Open JSON file and apply analysis data to BN database
@@ -215,7 +190,8 @@ class ImportInBackground(BackgroundTaskThread):
         print('[*] Importing analysis data from {}'.format(self.options.json_file))
         json_array = self.open_json_file(self.options.json_file)
         if self.bv.platform is None:
-            self.set_raw_binary_params(json_array['sections'])
+            print('[!] Platform has not been set, cannot import analysis data')
+            return
 
         self.import_functions(json_array['functions'], json_array['sections'])
         self.import_function_comments(json_array['func_comments'], json_array['sections'])
