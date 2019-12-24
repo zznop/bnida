@@ -11,7 +11,15 @@ bnida consists of (2) IDA Pro scripts and (2) Binary Ninja (BN) plugins that use
 All four scripts are designed to support a single, common JSON file format. This not only allows for transfers between
 BN and IDA platorms, but also BN<->BN and IDA<->IDA too. This is especially useful if there is a desire to share
 analysis data with someone using an older version of IDA who can't open your newer IDA database. The JSON file itself
-is also easy to digest with custom tooling, since almost every programming language contains a JSON library.
+is also easy to digest with custom tooling, since almost every programming language contains a JSON library. Currently,
+bnida supports transferring the following analysis data:
+* Functions
+* Function comments
+* Address comments
+* Symbols
+* Structures (beta)
+
+Section information is also exported to the JSON file and used for adjusting offsets during imports.
 
 # Installation
 
@@ -31,96 +39,40 @@ C:\Users\zznop\AppData\Roaming\Binary Ninja\plugins>mklink binja_export.py C:\Us
 symbolic link created for binja_export.py <<===>> C:\Users\zznop\projects\bnida\binja\binja_export.py
 ```
 
-### Before
+# Transferring Analysis Data
 
-![BN Before](public/before.PNG "Before Loading Analysis Data")
+bnida can be used to transfer analysis data from BN to BN, IDA to IDA, BN to IDA, or IDA to BN. The following sections
+describe how to use bnida plugins in IDA Pro and Binary Ninja.
 
-### After
+## IDA Pro
 
-![BN After](public/after.PNG "After Loading Analysis Data")
+`ida_export.py` and `ida_import.py` are used to export/import analysis data into/from IDA databases. To export from an
+IDA database, press `ALT+F7` and open `ida_export.py`. When prompted, enter the file path for the bnida JSON file to be
+generated and click "save". The script should create the file and populate it with data from your IDA database.
+Similarly, to import data into an IDA database, run `ida_import.py`. When prompted, select the bnida JSON file and click
+"save". Both IDA scripts print debug output to the output window.
 
-## Getting Started
+![IDA Export](public/ida_export.gif "ida_export.py")
 
-### Setup and Configuration
+## Binary Ninja
 
-To use bnida, clone the [repository](https://github.com/zznop/bnida) into your Binary Ninja plugins folder. Then,
-I recommend moving the IDA plugins (`ida_export.py` and `ida_import.py`), to `C:\Program Files\IDA 7.1\plugins` (Windows)
-and configure a hotkey to execute each IDAPython script. To do so, follow
-[this](http://www.mopsled.com/2016/add-shortcut-for-idapython-script-ida-pro/) blog post.
-If you don't want to bother with that, no problem. You can run `ida_export.py` or `ida_import.py` by simply typing
-`Alt+F7` to execute a script file.
+`binja_export.py` and `binja_import.py` are used to export/import analysis data into/from Binary Ninja databases. To
+export from a BN database, click `Tools->bnida: Export data`. When prompted, enter the file path for the bnida JSON file
+that will be generated and click "OK". The plugin should run in the background and create the bnida JSON file.
+Likewise, to import data click `Tools->bnida: Import data`. When prompted, open the bnida JSON file. The plugin should
+run in the background and apply the analysis data in the bnida JSON file to the open BN database.
 
-### IDA to Binary Ninja
+![Binja Import](public/binja_import.gif "binja_import.py")
 
-1. Open your IDA database (or load a binary and allow analysis to complete)
+# Raw Binaries
 
-2. Type `Alt+F7` and select the `ida_export.py`
+During imports, bnida adjusts offsets based on the symbol's/comment's/function's section base address. This is done to
+allow data imports to succeed even if the binary has been rebased. This design works excellent with PE and ELF binaries
+where section info is in headers and sections are applied by the loaders. In the case of raw binaries (i.e. flat
+firmware images), sections must be applied manually. It is important to ensure that sections have been applied at the
+same offsets across databases prior to attempting to transfer analysis data.
 
-    ##### Run IDA Export Script
-    
-    ![Run IDA Export](public/ida-run-script.PNG "Run ida_export.py script")
-
-3. Input the file path for the JSON file that will be created
-
-4. Click Ok. Analysis data will be written to the JSON file
-
-    ##### IDA Analysis Data JSON
-    
-    ![IDA Analysis Data JSON](public/ida-exported-json.PNG "IDA Analysis Data JSON")
-
-5. Open your BN database for the same binary (or load a binary and allow analysis to complete)
-6. Click `tools->Import data to BN`
-
-    ##### Run Binja Import Plugin
-    
-    ![Run Binja Import](public/bn-tools-import-data.PNG "Run binja_import.py Plugin")
-
-7. Enter the file path to the JSON file
-
-    ##### Supply File Path to IDA JSON
-    
-    ![Enter JSON File](public/bn-import-file-input.PNG "File path to IDA JSON")
-
-8. Click ok. Your database will then be updated with the analysis data from IDA.
-
-### Binary Ninja to IDA
-
-BN to IDA transfers require a similar process. The steps are as follows:
-
-1. Open your Binary Ninja database (or load a binary and allow analysis to complete)
-2. Click `tools->Export data from BN`
-3. Input the file path for the JSON file that will be created
-4. Click Ok. Analysis data will be written to the JSON file
-5. Open your IDA database for the same binary (or load the binary and allow analysis to complete)
-6. Type `Alt+F7` or click `File->Script File` and select the `ida_import.py`
-7. Select the JSON file
-8. Click ok. Your database will then be updated with the analysis data from BN.
-
-## Additional Information
-
-### Handling Flat Files
-
-bnida calculates offsets between IDA and BN relative to the base address of the symbol's section. This is done to 
-account for potential base address differences between the platforms. This design works excellent with PE and ELF 
-executable file formats where the section names are defined in headers (which ensures section names are uniform).
-However, with flat files (such as kernel images) where defining sections are left to the user, it is important to ensure
-that section names are identical between the BNDB and IDB. Currently, `binja_import.py` contains a feature that allows
-you to define the offsets for sections contained in the exported IDA JSON data. After selecting the JSON file, it checks
-if the default processor has been set. If it has not been set, a input box will appear. The input box prompts the user
-to define the default processor and set the base address for each section found in the JSON file.
-
-##### Binja Import Prompt for Defining Sections
-
-![Defining Sections](public/flat-file-section-definition.PNG "Defining Sections")
-
-Sections can be defined manually using the Binary Ninja API and the script console, if needed. To create a section, use
-`BinaryView.add_user_section(name, start, length)`. To validate that the section was created, navigate to linear view
-and scroll to the top of the binary.
-
-##### Add a Section Manually
-
-![Create Section Manually](public/bn-add-section.PNG "BN Add User Section")
-
-##### BN Sections View
-
-![BN Sections](public/bn-sections.PNG "BN Sections")
+In addition to sections, ensure that the platform has been set in Binary Ninja before attempting to import analysis data
+into a raw binary database. This can be done by loading the binary with options or using the Python API to set
+`bv.platform`. This is required so that the importer plugin can create functions. Likewise, ensure the correct processor
+is set in IDA before import.
