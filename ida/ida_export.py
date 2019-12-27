@@ -4,6 +4,7 @@ import ida_segment
 import ida_bytes
 import idautils
 import json
+from collections import OrderedDict
 
 """
 Exports analysis data from IDA to a bnida json file
@@ -209,7 +210,7 @@ def get_structs():
     :return: Dict containing structure info
     """
 
-    structs = {}
+    structs = OrderedDict()
     for idx, sid, name in idautils.Structs():
         struct = ida_struct.get_struc(sid)
         structs[name] = {}
