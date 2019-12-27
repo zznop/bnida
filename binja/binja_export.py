@@ -1,6 +1,7 @@
 import json
 from optparse import OptionParser
 from binaryninja import *
+from collections import OrderedDict
 
 """
 Exports analysis data from a BN database to a bnida JSON file
@@ -106,6 +107,35 @@ class ExportInBackground(BackgroundTaskThread):
 
         return comments
 
+    def get_structures(self):
+        """
+        Export structures/types
+
+        :return: Dict containing structure info
+        """
+
+        structures = OrderedDict()
+        for type_token in self.bv.types:
+            typ = self.bv.get_type_by_name(type_token)
+            if typ.structure is None:
+                continue
+
+            struct_name = type_token.name[0]
+            members = {}
+            for member in typ.structure.members:
+                members[member.name] = {}
+                members[member.name]['offset'] = member.offset
+                members[member.name]['size']   = member.type.width
+                members[member.name]['type']   = ''
+                for token in member.type.tokens:
+                    members[member.name]['type'] += str(token)
+
+            structures[struct_name] = {}
+            structures[struct_name]['size'] = typ.structure.width
+            structures[struct_name]['members'] = members
+
+        return structures
+
     def run(self):
         """
         Export analysis data to bnida JSON file
@@ -118,7 +148,7 @@ class ExportInBackground(BackgroundTaskThread):
         json_array['functions']      = self.get_functions()
         json_array['func_comments']  = self.get_function_comments()
         json_array['line_comments']  = self.get_line_comments()
-        json_array['structs']        = {} # TODO
+        json_array['structs']        = self.get_structures()
 
         with open(self.options.json_file, 'w+') as f:
             json.dump(json_array, f, indent=4)
