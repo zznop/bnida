@@ -1,4 +1,5 @@
 import json
+from collections import OrderedDict
 from binaryninja import *
 
 """
@@ -76,7 +77,7 @@ class ImportInBackground(BackgroundTaskThread):
         """
 
         f = open(json_file, 'rb')
-        return json.load(f)
+        return json.load(f, object_pairs_hook=OrderedDict)
 
     def import_functions(self, functions, sections):
         """
@@ -146,7 +147,12 @@ class ImportInBackground(BackgroundTaskThread):
         for struct_name, struct_info in structs.items():
             struct = types.Structure()
             for member_name, member_info in struct_info['members'].items():
-                typ, _ = self.bv.parse_type_string('{}'.format(member_info['type']))
+                try:
+                    typ, _ = self.bv.parse_type_string('{}'.format(member_info['type']))
+                except SyntaxError:
+                    print('Failed to apply type ({}) to member ({}) in structure ({})'.format(
+                        member_info['type'], member_name, struct_name))
+                    typ, _ = self.bv.parse_type_string('uint8_t [{}]'.format(member_info['size']))
                 struct.insert(int(member_info['offset']), typ, member_name)
 
             self.bv.define_user_type(struct_name, Type.structure_type(struct))
