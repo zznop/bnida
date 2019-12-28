@@ -3,6 +3,8 @@ import idautils
 import ida_kernwin
 import idaapi
 import ida_segment
+import ida_struct
+import ida_bytes
 import json
 
 """
@@ -13,6 +15,21 @@ __author__    = 'zznop'
 __copyright__ = 'Copyright 2018, zznop0x90@gmail.com'
 __license__   = 'MIT'
 
+def get_flag_from_type(typ):
+    """
+    Get IDA flag_t from type string
+
+    :param typ: Type string
+    """
+
+    if typ in ['uint32_t', 'int32_t', 'DWORD', 'int']:
+        return ida_bytes.dword_flag()
+    elif typ in ['uint64_t', 'int64_t', 'LONG LONG']:
+        return ida_bytes.qword_flag()
+    elif typ in ['uint16_t', 'int16_t']:
+        return ida_bytes.word_flag()
+    else:
+        return ida_bytes.byte_flag()
 
 def sanitize_name(name):
     """
@@ -67,7 +84,10 @@ def import_functions(functions, sections):
     """
 
     for addr in functions:
-        addr = adjust_addr(sections, addr)
+        addr = adjust_addr(sections, int(addr))
+        if addr is None:
+            continue
+
         if ida_funcs.get_func(addr):
             continue
 
@@ -123,6 +143,30 @@ def import_names(names, sections):
         if idc.get_name_ea_simple(name) == idaapi.BADADDR:
             idc.set_name(addr, name)
 
+def import_structures(structures):
+    """
+    Import structures
+
+    :param structures: Dict containing structure information
+    """
+
+    curr_idx = ida_struct.get_last_struc_idx() + 1
+    for struct_name, struct_info in structures.items():
+        # Create structure
+        tid = ida_struct.add_struc(curr_idx, struct_name)
+
+        # Get struct object and add members
+        struct = ida_struct.get_struc(tid)
+        for member_name, member_info in struct_info['members'].items():
+            flag = get_flag_from_type(member_info['type'])
+            ida_struct.add_struc_member(
+                struct, member_name, member_info['offset'],
+                flag, None, member_info['size']
+            )
+
+        curr_idx += 1
+
+
 def get_json(json_file):
     """
     Read bnida JSON file
@@ -157,6 +201,7 @@ def main(json_file):
     import_function_comments(json_array['func_comments'], json_array['sections'])
     import_line_comments(json_array['line_comments'], json_array['sections'])
     import_names(json_array['names'], json_array['sections'])
+    import_structures(json_array['structs'])
     print('[+] Done importing analysis data')
 
 if __name__ == '__main__':
