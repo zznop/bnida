@@ -163,9 +163,3 @@ def export_data_in_background(bv):
     options = GetOptions()
     background_task = ExportInBackground(bv, options)
     background_task.start()
-
-PluginCommand.register(
-    'bnida: Export data',
-    'bnida: Export data',
-    export_data_in_background
-)

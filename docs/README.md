@@ -25,19 +25,10 @@ Section information is also exported to the JSON file and used for adjusting off
 
 This section describes how to install bnida scripts on a Windows operating system. The process is similar on Linux.
 
-1. Clone the [repository](https://github.com/zznop/bnida).
+1. Clone the [repository](https://github.com/zznop/bnida) to your BN plugins folder (or install using the plugin manager)
 
 2. Copy the IDA scripts to `C:\Program Files\IDA {version}\plugins` and configure a hotkey. (or keep them where they are
 if you prefer to run them as scripts with `Alt+F7`).
-
-3. Copy the BN plugins to the Binary Ninja plugins folder at `%AppData%\Binary Ninja\plugins`
-
-Optionally, you can keep the files where they are in the cloned repository and simply create symbolic links.
-
-```
-C:\Users\zznop\AppData\Roaming\Binary Ninja\plugins>mklink binja_export.py C:\Users\zznop\projects\bnida\binja\binja_export.py
-symbolic link created for binja_export.py <<===>> C:\Users\zznop\projects\bnida\binja\binja_export.py
-```
 
 # Transferring Analysis Data
 
