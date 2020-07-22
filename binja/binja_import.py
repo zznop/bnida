@@ -217,9 +217,3 @@ def import_data_in_background(bv):
     options = GetOptions()
     background_task = ImportInBackground(bv, options)
     background_task.start()
-
-PluginCommand.register(
-    "bnida: Import data",
-    "bnida: Import data",
-    import_data_in_background
-)
