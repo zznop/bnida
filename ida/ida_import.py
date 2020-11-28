@@ -1,3 +1,7 @@
+"""
+Imports analysis data from a bnida JSON file to IDA
+"""
+
 import idc
 import idautils
 import ida_kernwin
@@ -5,15 +9,9 @@ import idaapi
 import ida_segment
 import ida_struct
 import ida_bytes
+import ida_funcs
 import json
 
-"""
-Imports analysis data from a bnida JSON file to IDA
-"""
-
-__author__    = 'zznop'
-__copyright__ = 'Copyright 2018, zznop0x90@gmail.com'
-__license__   = 'MIT'
 
 def get_flag_from_type(typ):
     """
@@ -31,6 +29,7 @@ def get_flag_from_type(typ):
     else:
         return ida_bytes.byte_flag()
 
+
 def sanitize_name(name):
     """
     Remove characters from names that IDA doesn't like
@@ -42,6 +41,7 @@ def sanitize_name(name):
     name = name.replace('!', '_')
     name = name.replace('@', '_')
     return name
+
 
 def adjust_addr(sections, addr):
     """
@@ -75,6 +75,7 @@ def adjust_addr(sections, addr):
     print('Section not found - name:{} addr:{:08x}'.format(section_name, addr))
     return None
 
+
 def import_functions(functions, sections):
     """
     Create functions from bnida analysis data
@@ -91,8 +92,9 @@ def import_functions(functions, sections):
         if ida_funcs.get_func(addr):
             continue
 
-        if ida_funcs.add_func(addr) != True:
+        if not ida_funcs.add_func(addr):
             print('Failed to create function at offset:{:08x}'.format(addr))
+
 
 def import_function_comments(comments, sections):
     """
@@ -114,6 +116,7 @@ def import_function_comments(comments, sections):
 
         ida_funcs.set_func_cmt(func, comment, False)
 
+
 def import_line_comments(comments, sections):
     """
     Import line comments
@@ -125,6 +128,7 @@ def import_line_comments(comments, sections):
     for addr, comment in comments.items():
         addr = adjust_addr(sections, int(addr))
         ida_bytes.set_cmt(addr, comment, 0)
+
 
 def import_names(names, sections):
     """
@@ -142,6 +146,7 @@ def import_names(names, sections):
         name = sanitize_name(name)
         if idc.get_name_ea_simple(name) == idaapi.BADADDR:
             idc.set_name(addr, name)
+
 
 def import_structures(structures):
     """
@@ -186,6 +191,7 @@ def get_json(json_file):
         print('Failed to parse json file {} {}'.format(json_file, e))
     return json_array
 
+
 def main(json_file):
     """
     Import analysis data from bnida JSON file
@@ -198,11 +204,13 @@ def main(json_file):
 
     print('[*] Importing analysis data from {}'.format(json_file))
     import_functions(json_array['functions'], json_array['sections'])
-    import_function_comments(json_array['func_comments'], json_array['sections'])
+    import_function_comments(
+        json_array['func_comments'], json_array['sections'])
     import_line_comments(json_array['line_comments'], json_array['sections'])
     import_names(json_array['names'], json_array['sections'])
     import_structures(json_array['structs'])
     print('[+] Done importing analysis data')
+
 
 if __name__ == '__main__':
     main(ida_kernwin.ask_file(1, '*.json', 'Import file name'))

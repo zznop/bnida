@@ -1,15 +1,10 @@
-import json
-from optparse import OptionParser
-from binaryninja import *
-from collections import OrderedDict
-
 """
 Exports analysis data from a BN database to a bnida JSON file
 """
 
-__author__      = 'zznop'
-__copyright__   = 'Copyright 2018, zznop0x90@gmail.com'
-__license__     = 'MIT'
+import json
+from binaryninja import SaveFileNameField, get_form_input, BackgroundTaskThread
+from collections import OrderedDict
 
 
 class GetOptions(object):
@@ -21,14 +16,15 @@ class GetOptions(object):
         else:
             self.json_file = json_file.result
 
+
 class ExportInBackground(BackgroundTaskThread):
     def __init__(self, bv, options):
         global task
         BackgroundTaskThread.__init__(self, 'Exporting data from BN', False)
         self.json_file = options.json_file
-        self.options   = options
-        self.bv        = bv
-        task           = self
+        self.options = options
+        self.bv = bv
+        task = self
 
     def get_sections(self):
         """
@@ -41,8 +37,8 @@ class ExportInBackground(BackgroundTaskThread):
         for section_name in self.bv.sections:
             section = self.bv.get_section_by_name(section_name)
             sections[section.name] = {
-                'start' : section.start,
-                'end' : section.end
+                'start': section.start,
+                'end': section.end
             }
 
         return sections
@@ -80,7 +76,6 @@ class ExportInBackground(BackgroundTaskThread):
 
         comments = {}
         for func in self.bv:
-            current_function = {}
             if func.comment:
                 comments[func.start] = func.comment
 
@@ -125,8 +120,8 @@ class ExportInBackground(BackgroundTaskThread):
             for member in typ.structure.members:
                 members[member.name] = {}
                 members[member.name]['offset'] = member.offset
-                members[member.name]['size']   = member.type.width
-                members[member.name]['type']   = ''
+                members[member.name]['size'] = member.type.width
+                members[member.name]['type'] = ''
                 for token in member.type.tokens:
                     members[member.name]['type'] += str(token)
 
@@ -141,19 +136,21 @@ class ExportInBackground(BackgroundTaskThread):
         Export analysis data to bnida JSON file
         """
 
-        print('[*] Exporting analysis data to {}'.format(self.options.json_file))
-        json_array                   = {}
-        json_array['sections']       = self.get_sections()
-        json_array['names']          = self.get_names()
-        json_array['functions']      = self.get_functions()
-        json_array['func_comments']  = self.get_function_comments()
-        json_array['line_comments']  = self.get_line_comments()
-        json_array['structs']        = self.get_structures()
+        print('[*] Exporting analysis data to {}'.format(
+            self.options.json_file))
+        json_array = {}
+        json_array['sections'] = self.get_sections()
+        json_array['names'] = self.get_names()
+        json_array['functions'] = self.get_functions()
+        json_array['func_comments'] = self.get_function_comments()
+        json_array['line_comments'] = self.get_line_comments()
+        json_array['structs'] = self.get_structures()
 
         with open(self.options.json_file, 'w+') as f:
             json.dump(json_array, f, indent=4)
 
         print('[+] Done exporting analysis data')
+
 
 def export_data_in_background(bv):
     """

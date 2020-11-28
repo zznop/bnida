@@ -1,18 +1,16 @@
+"""
+Exports analysis data from IDA to a bnida json file
+"""
+
 import ida_struct
 import ida_kernwin
 import ida_segment
 import ida_bytes
 import idautils
+import ida_funcs
+import idaapi
 import json
 from collections import OrderedDict
-
-"""
-Exports analysis data from IDA to a bnida json file
-"""
-
-__author__    = 'zznop'
-__copyright__ = 'Copyright 2018, zznop0x90@gmail.com'
-__license__   = 'MIT'
 
 
 def get_single_comment(regular, repeatable):
@@ -31,6 +29,7 @@ def get_single_comment(regular, repeatable):
     elif regular is not None and repeatable is None:
         return regular
 
+
 def get_single_function_comment(ea):
     """
     Get function comment
@@ -44,6 +43,7 @@ def get_single_function_comment(ea):
     repeatable = ida_funcs.get_func_cmt(func, True)
     return get_single_comment(regular, repeatable)
 
+
 def get_single_line_comment(ea):
     """
     Get line comment
@@ -56,6 +56,7 @@ def get_single_line_comment(ea):
     repeatable = ida_bytes.get_cmt(ea, True)
     cmt = get_single_comment(regular, repeatable)
     return cmt
+
 
 def get_function_comments():
     """
@@ -72,6 +73,7 @@ def get_function_comments():
 
     return comments
 
+
 def get_functions():
     """
     Get function start addresses
@@ -84,6 +86,7 @@ def get_functions():
         func_addrs.append(ea)
 
     return func_addrs
+
 
 def get_line_comments():
     """
@@ -122,6 +125,7 @@ def get_names():
 
     return symbols
 
+
 def get_sections():
     """
     Get section names and start/end addrs from IDA database
@@ -137,11 +141,12 @@ def get_sections():
             continue
 
         curr = {}
-        curr['start']  = segm.start_ea
-        curr['end']    = segm.end_ea
+        curr['start'] = segm.start_ea
+        curr['end'] = segm.end_ea
         sections[name] = curr
 
     return sections
+
 
 def get_member_type(struct, idx):
     """
@@ -180,6 +185,7 @@ def get_member_type(struct, idx):
 
     return typ
 
+
 def get_struct_members(struct, sid):
     """
     Get members belonging to a structure by structure ID
@@ -199,9 +205,10 @@ def get_struct_members(struct, sid):
             # Type isn't set so make it a byte array
             members[name]['type'] = 'uint8_t [{}]'.format(size)
         members[name]['offset'] = offset
-        members[name]['size']   = size
+        members[name]['size'] = size
 
     return members
+
 
 def get_structs():
     """
@@ -214,10 +221,11 @@ def get_structs():
     for idx, sid, name in idautils.Structs():
         struct = ida_struct.get_struc(sid)
         structs[name] = {}
-        structs[name]['size']    = ida_struct.get_struc_size(struct)
+        structs[name]['size'] = ida_struct.get_struc_size(struct)
         structs[name]['members'] = get_struct_members(struct, sid)
 
     return structs
+
 
 def main(json_file):
     """
@@ -228,16 +236,17 @@ def main(json_file):
 
     json_array = {}
     print('[*] Exporting analysis data to {}'.format(json_file))
-    json_array['sections']      = get_sections()
-    json_array['functions']     = get_functions()
+    json_array['sections'] = get_sections()
+    json_array['functions'] = get_functions()
     json_array['func_comments'] = get_function_comments()
     json_array['line_comments'] = get_line_comments()
-    json_array['names']         = get_names()
-    json_array['structs']       = get_structs()
+    json_array['names'] = get_names()
+    json_array['structs'] = get_structs()
     print('[+] Done exporting analysis data')
 
     with open(json_file, 'w') as f:
         f.write(json.dumps(json_array, indent=4))
+
 
 if __name__ == '__main__':
     main(ida_kernwin.ask_file(1, '*.json', 'Export file name'))

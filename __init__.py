@@ -1,5 +1,5 @@
-from binaryninja import *
-from .binja import *
+from binaryninja import PluginCommand
+from .binja import import_data_in_background, export_data_in_background
 
 PluginCommand.register(
     'bnida: Import analysis data',

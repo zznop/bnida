@@ -1,14 +1,12 @@
-import json
-from collections import OrderedDict
-from binaryninja import *
-
 """
 Imports analysis data from a bnida json file into a Binary Ninja database
 """
 
-__author__      = 'zznop'
-__copyright__   = 'Copyright 2018, zznop0x90@gmail.com'
-__license__     = 'MIT'
+import json
+from collections import OrderedDict
+from binaryninja import (OpenFileNameField, get_form_input,
+                         BackgroundTaskThread, types, Type, SymbolType, Symbol,
+                         Architecture)
 
 
 class GetOptions(object):
@@ -32,7 +30,8 @@ class ImportInBackground(BackgroundTaskThread):
 
     def __init__(self, bv, options):
         global task
-        BackgroundTaskThread.__init__(self, 'Importing data from bnida JSON file', False)
+        BackgroundTaskThread.__init__(
+            self, 'Importing data from bnida JSON file', False)
         self.json_file = options.json_file
         self.bv = bv
         self.options = options
@@ -56,13 +55,14 @@ class ImportInBackground(BackgroundTaskThread):
 
         # Make sure the section was found (this check should always pass)
         if section_name is None:
-            print('Section not found in analysis data for addr: {:08x}'.format(addr))
+            print('Section not found in analysis data: {:08x}'.format(addr))
             return None
 
         # Retrieve section start in BN
         bn_section = self.bv.get_section_by_name(section_name)
         if bn_section is None:
-            print('Section not found in BN - name:{} addr:{:08x}'.format(section_name, addr))
+            print('Section not found in BN - name:{} addr:{:08x}'.format(
+                section_name, addr))
             return None
 
         # Adjust if needed
@@ -116,9 +116,11 @@ class ImportInBackground(BackgroundTaskThread):
 
     def import_line_comments(self, comments, sections):
         """
-        Import line comments into BN database. Binary Ninja uses BinaryView.set_function_at or Function.set_comment_at
-        for line comments in data sections or line comments in Functions, respectively. Therefore, we check if the
-        addr is contained in a function and use the appropriate API.
+        Import line comments into BN database. Binary Ninja uses
+        BinaryView.set_function_at or Function.set_comment_at for line
+        comments in data sections or line comments in Functions, respectively.
+        Therefore, we check if the addr is contained in a function and use the
+        appropriate API.
 
         :param comments: Dict containing line comments
         :param sections: Dict containing section info
@@ -148,11 +150,13 @@ class ImportInBackground(BackgroundTaskThread):
             struct = types.Structure()
             for member_name, member_info in struct_info['members'].items():
                 try:
-                    typ, _ = self.bv.parse_type_string('{}'.format(member_info['type']))
+                    typ, _ = self.bv.parse_type_string('{}'.format(
+                        member_info['type']))
                 except SyntaxError:
-                    print('Failed to apply type ({}) to member ({}) in structure ({})'.format(
+                    print('Failed to apply type ({}) to member ({}): ({})'.format(
                         member_info['type'], member_name, struct_name))
-                    typ, _ = self.bv.parse_type_string('uint8_t [{}]'.format(member_info['size']))
+                    typ, _ = self.bv.parse_type_string('uint8_t [{}]'.format(
+                        member_info['size']))
                 struct.insert(int(member_info['offset']), typ, member_name)
 
             self.bv.define_user_type(struct_name, Type.structure_type(struct))
@@ -171,9 +175,11 @@ class ImportInBackground(BackgroundTaskThread):
                 continue
 
             if self.bv.get_function_at(addr):
-                self.bv.define_user_symbol(Symbol(SymbolType.FunctionSymbol, addr, name))
+                self.bv.define_user_symbol(
+                    Symbol(SymbolType.FunctionSymbol, addr, name))
             else:
-                self.bv.define_user_symbol(Symbol(SymbolType.DataSymbol, addr, name))
+                self.bv.define_user_symbol(
+                    Symbol(SymbolType.DataSymbol, addr, name))
 
     def get_architectures(self):
         """
@@ -193,19 +199,23 @@ class ImportInBackground(BackgroundTaskThread):
         Open JSON file and apply analysis data to BN database
         """
 
-        print('[*] Importing analysis data from {}'.format(self.options.json_file))
+        print('[*] Importing analysis data from {}'.format(
+            self.options.json_file))
         json_array = self.open_json_file(self.options.json_file)
         if self.bv.platform is None:
             print('[!] Platform has not been set, cannot import analysis data')
             return
 
         self.import_functions(json_array['functions'], json_array['sections'])
-        self.import_function_comments(json_array['func_comments'], json_array['sections'])
-        self.import_line_comments(json_array['line_comments'], json_array['sections'])
+        self.import_function_comments(
+            json_array['func_comments'], json_array['sections'])
+        self.import_line_comments(
+            json_array['line_comments'], json_array['sections'])
         self.import_names(json_array['names'], json_array['sections'])
         self.import_structures(json_array['structs'])
         self.bv.update_analysis_and_wait()
         print('[+] Done importing analysis data')
+
 
 def import_data_in_background(bv):
     """
