@@ -3,7 +3,7 @@ Exports analysis data from a BN database to a bnida JSON file
 """
 
 import json
-from binaryninja import SaveFileNameField, get_form_input, BackgroundTaskThread
+from binaryninja import SaveFileNameField, get_form_input, BackgroundTaskThread, types
 from collections import OrderedDict
 
 
@@ -111,7 +111,7 @@ class ExportInBackground(BackgroundTaskThread):
 
         structures = OrderedDict()
         for type_name, vtype in self.bv.types:
-            if type(vtype) == binaryninja.types.StructureType:
+            if type(vtype) == types.StructureType:
                 struct_name = str(type_name)
                 members = {}
                 for member in vtype.members:
