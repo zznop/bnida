@@ -111,34 +111,21 @@ class ExportInBackground(BackgroundTaskThread):
 
         structures = OrderedDict()
         for type_name, vtype in self.bv.types:
-            typ = self.bv.get_type_by_name(type_token)
             if type(vtype) == binaryninja.types.StructureType:
-            if typ.structure is None:
                 struct_name = str(type_name)
-                continue
                 members = {}
-
                 for member in vtype.members:
-            struct_name = type_token.name[0]
                     members[member.name] = {}
-            members = {}
                     members[member.name]['offset'] = member.offset
-            for member in typ.structure.members:
                     members[member.name]['size']   = member.type.width
-                members[member.name] = {}
                     members[member.name]['type']   = ''
-                members[member.name]['offset'] = member.offset
                     for token in member.type.tokens:
-                members[member.name]['size'] = member.type.width
                         members[member.name]['type'] += str(token)
-                members[member.name]['type'] = ''
                 structures[struct_name] = {}
-                for token in member.type.tokens:
                 structures[struct_name]['size'] = vtype.width
-                    members[member.name]['type'] += str(token)
                 structures[struct_name]['members'] = members
-
         return structures
+
 
     def run(self):
         """
