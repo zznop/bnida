@@ -147,7 +147,7 @@ class ImportInBackground(BackgroundTaskThread):
         """
 
         for struct_name, struct_info in structs.items():
-            struct = types.Structure()
+            struct = types.StructureBuilder.create()
             for member_name, member_info in struct_info['members'].items():
                 try:
                     typ, _ = self.bv.parse_type_string('{}'.format(
@@ -157,7 +157,7 @@ class ImportInBackground(BackgroundTaskThread):
                         member_info['type'], member_name, struct_name))
                     typ, _ = self.bv.parse_type_string('uint8_t [{}]'.format(
                         member_info['size']))
-                struct.insert(int(member_info['offset']), typ, member_name)
+                struct.add_member_at_offset(member_name, typ, int(member_info['offset']))
 
             self.bv.define_user_type(struct_name, Type.structure_type(struct))
 
