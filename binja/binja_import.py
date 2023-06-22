@@ -147,7 +147,7 @@ class ImportInBackground(BackgroundTaskThread):
         """
 
         for struct_name, struct_info in structs.items():
-            struct = types.Structure()
+            struct = types.StructureBuilder.create()
             for member_name, member_info in struct_info['members'].items():
                 try:
                     typ, _ = self.bv.parse_type_string('{}'.format(
