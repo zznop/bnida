@@ -30,19 +30,6 @@ def get_flag_from_type(typ):
         return ida_bytes.byte_flag()
 
 
-def sanitize_name(name):
-    """
-    Remove characters from names that IDA doesn't like
-
-    :param name: Unsanitized name
-    :return: Sanitized name
-    """
-
-    name = name.replace('!', '_')
-    name = name.replace('@', '_')
-    return name
-
-
 def adjust_addr(sections, addr):
     """
     Adjust the address if there are differences in section base addresses
@@ -143,9 +130,9 @@ def import_names(names, sections):
         if addr is None:
             continue
 
-        name = sanitize_name(name)
         if idc.get_name_ea_simple(name) == idaapi.BADADDR:
-            idc.set_name(addr, name)
+            # Invalid characters are silently sanitized with `_` here.
+            idc.set_name(addr, name, idc.SN_NOCHECK)
 
 
 def import_structures(structures):
