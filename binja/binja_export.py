@@ -87,14 +87,9 @@ class ExportInBackground(BackgroundTaskThread):
 
         :return: Dict containing line comments
         """
-
         comments = {}
-        for section_name in self.bv.sections:
-            section = self.bv.get_section_by_name(section_name)
-            for addr in range(section.start, section.end):
-                comment = self.bv.get_comment_at(addr)
-                if comment:
-                    comments[addr] = comment
+        for addr in self.bv.address_comments:
+            comments[addr] = self.bv.get_comment_at(addr)
 
         for func in self.bv:
             for addr in func.comments:
