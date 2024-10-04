@@ -21,8 +21,8 @@ analysis data between Binja and IDA. A description of each plugin is provided be
 ## Usage
 
 `binja_export.py` and `binja_import.py` are used to export/import analysis data into a Binary Ninja database to/from
-a bnida JSON file. To export from a Binary Ninja database, click `Plugins->bnida: Export data`. When prompted, enter the
-file path for the bnida JSON file and click "OK". Likewise, to import data click `Plugins->bnida: Import data` and
+a bnida JSON file. To export from a Binary Ninja database, click `Plugins->bnida->Export analysis data`. When prompted, enter the
+file path for the bnida JSON file and click "OK". Likewise, to import data click `Plugins->bnida->Import analysis data` and
 select the bnida JSON file.
 
 ![Binja Import](screenshots/binja_import.gif "binja_import.py")

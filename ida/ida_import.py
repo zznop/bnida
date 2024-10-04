@@ -14,12 +14,6 @@ import json
 
 
 def get_flag_from_type(typ):
-    """
-    Get IDA flag_t from type string
-
-    :param typ: Type string
-    """
-
     if typ in ['uint32_t', 'int32_t', 'DWORD', 'int']:
         return ida_bytes.dword_flag()
     elif typ in ['uint64_t', 'int64_t', 'LONG LONG']:
@@ -31,14 +25,6 @@ def get_flag_from_type(typ):
 
 
 def adjust_addr(sections, addr):
-    """
-    Adjust the address if there are differences in section base addresses
-
-    :param sections: Dictionary containing section info
-    :param addr: Address that might need adjusted
-    :return: Adjusted address
-    """
-
     bn_section_start = None
     section_name = None
     for name, section in sections.items():
@@ -66,13 +52,6 @@ def adjust_addr(sections, addr):
 
 
 def import_functions(functions, sections):
-    """
-    Create functions from bnida analysis data
-
-    :param functions: Array of function addrs
-    :param sections: Dict containing section info
-    """
-
     for addr in functions:
         addr = adjust_addr(sections, int(addr))
         if addr is None:
@@ -86,13 +65,6 @@ def import_functions(functions, sections):
 
 
 def import_function_comments(comments, sections):
-    """
-    Import function comments into IDA
-
-    :param comments: Dict containing function comments
-    :param sections: Dict containing section info
-    """
-
     for addr, comment in comments.items():
         addr = adjust_addr(sections, int(addr))
         if addr is None:
@@ -108,26 +80,12 @@ def import_function_comments(comments, sections):
 
 
 def import_line_comments(comments, sections):
-    """
-    Import line comments
-
-    :param comments: Dict containing line comments
-    :param sections: Dict containing section info
-    """
-
     for addr, comment in comments.items():
         addr = adjust_addr(sections, int(addr))
         ida_bytes.set_cmt(addr, comment, 0)
 
 
 def import_names(names, sections):
-    """
-    Import symbol names
-
-    :param names: Dict containing symbol info
-    :param sections: Dict containing section info
-    """
-
     for addr, name in names.items():
         addr = adjust_addr(sections, int(addr))
         if addr is None:
@@ -139,12 +97,6 @@ def import_names(names, sections):
 
 
 def import_structures(structures):
-    """
-    Import structures
-
-    :param structures: Dict containing structure information
-    """
-
     curr_idx = ida_struct.get_last_struc_idx() + 1
     for struct_name, struct_info in structures.items():
         # Create structure
@@ -162,13 +114,6 @@ def import_structures(structures):
 
 
 def get_json(json_file):
-    """
-    Read bnida JSON file
-
-    :param json_file: Path to json file
-    :return: Dict containing JSON file content
-    """
-
     json_array = None
     if json_file is None:
         return None
@@ -182,23 +127,19 @@ def get_json(json_file):
 
 
 def main(json_file):
-    """
-    Import analysis data from bnida JSON file
-    """
-
     json_array = get_json(json_file)
     if not json_array:
         print('JSON file not specified')
         return
 
-    print('[*] Importing analysis data from {}'.format(json_file))
+    print('Importing analysis data from {}'.format(json_file))
     import_functions(json_array['functions'], json_array['sections'])
     import_function_comments(json_array['func_comments'],
                              json_array['sections'])
     import_line_comments(json_array['line_comments'], json_array['sections'])
     import_names(json_array['names'], json_array['sections'])
     import_structures(json_array['structs'])
-    print('[+] Done importing analysis data')
+    print('Done importing analysis data')
 
 
 if __name__ == '__main__':
