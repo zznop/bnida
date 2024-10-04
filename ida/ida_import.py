@@ -49,7 +49,9 @@ def adjust_addr(sections, addr):
 
     # Make sure the section was found (this check should always pass)
     if section_name is None:
-        print('Section not found in bnida analysis data for addr: {:08x}'.format(addr))
+        print(
+            'Section not found in bnida analysis data for addr: {:08x}'.format(
+                addr))
         return None
 
     # Retrieve section start in IDA and adjust the addr
@@ -98,7 +100,8 @@ def import_function_comments(comments, sections):
 
         func = ida_funcs.get_func(addr)
         if func is None:
-            print('Failed to apply function comment at offset:{:08x}'.format(addr))
+            print('Failed to apply function comment at offset:{:08x}'.format(
+                addr))
             continue
 
         ida_funcs.set_func_cmt(func, comment, False)
@@ -151,10 +154,9 @@ def import_structures(structures):
         struct = ida_struct.get_struc(tid)
         for member_name, member_info in struct_info['members'].items():
             flag = get_flag_from_type(member_info['type'])
-            ida_struct.add_struc_member(
-                struct, member_name, member_info['offset'],
-                flag, None, member_info['size']
-            )
+            ida_struct.add_struc_member(struct, member_name,
+                                        member_info['offset'], flag, None,
+                                        member_info['size'])
 
         curr_idx += 1
 
@@ -191,8 +193,8 @@ def main(json_file):
 
     print('[*] Importing analysis data from {}'.format(json_file))
     import_functions(json_array['functions'], json_array['sections'])
-    import_function_comments(
-        json_array['func_comments'], json_array['sections'])
+    import_function_comments(json_array['func_comments'],
+                             json_array['sections'])
     import_line_comments(json_array['line_comments'], json_array['sections'])
     import_names(json_array['names'], json_array['sections'])
     import_structures(json_array['structs'])

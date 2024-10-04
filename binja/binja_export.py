@@ -3,13 +3,16 @@ Exports analysis data from a BN database to a bnida JSON file
 """
 
 import json
-from binaryninja import SaveFileNameField, get_form_input, BackgroundTaskThread, types
+from binaryninja import (SaveFileNameField, get_form_input,
+                         BackgroundTaskThread, types)
 from binaryninja.log import Logger
 from collections import OrderedDict
 
 logger = Logger(session_id=0, logger_name=__name__)
 
+
 class GetOptions(object):
+
     def __init__(self):
         json_file = SaveFileNameField('Export json file')
         get_form_input([json_file], 'BN Export Options')
@@ -20,6 +23,7 @@ class GetOptions(object):
 
 
 class ExportInBackground(BackgroundTaskThread):
+
     def __init__(self, bv, options):
         global task
         BackgroundTaskThread.__init__(self, 'Exporting data from BN', False)
@@ -108,21 +112,20 @@ class ExportInBackground(BackgroundTaskThread):
 
         structures = OrderedDict()
         for type_name, vtype in self.bv.types:
-            if type(vtype) == types.StructureType:
+            if isinstance(vtype, types.StructureType):
                 struct_name = str(type_name)
                 members = {}
                 for member in vtype.members:
                     members[member.name] = {}
                     members[member.name]['offset'] = member.offset
-                    members[member.name]['size']   = member.type.width
-                    members[member.name]['type']   = ''
+                    members[member.name]['size'] = member.type.width
+                    members[member.name]['type'] = ''
                     for token in member.type.tokens:
                         members[member.name]['type'] += str(token)
                 structures[struct_name] = {}
                 structures[struct_name]['size'] = vtype.width
                 structures[struct_name]['members'] = members
         return structures
-
 
     def run(self):
         """

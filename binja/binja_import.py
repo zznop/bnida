@@ -30,8 +30,9 @@ class ImportInBackground(BackgroundTaskThread):
 
     def __init__(self, bv, options):
         global task
-        BackgroundTaskThread.__init__(
-            self, 'Importing data from bnida JSON file', False)
+        BackgroundTaskThread.__init__(self,
+                                      'Importing data from bnida JSON file',
+                                      False)
         self.json_file = options.json_file
         self.bv = bv
         self.options = options
@@ -153,8 +154,9 @@ class ImportInBackground(BackgroundTaskThread):
                     typ, _ = self.bv.parse_type_string('{}'.format(
                         member_info['type']))
                 except SyntaxError:
-                    print('Failed to apply type ({}) to member ({}): ({})'.format(
-                        member_info['type'], member_name, struct_name))
+                    print('Failed to apply type ({}) to member ({}): ({})'.
+                          format(member_info['type'], member_name,
+                                 struct_name))
                     typ, _ = self.bv.parse_type_string('uint8_t [{}]'.format(
                         member_info['size']))
                 struct.insert(int(member_info['offset']), typ, member_name)
@@ -207,10 +209,10 @@ class ImportInBackground(BackgroundTaskThread):
             return
 
         self.import_functions(json_array['functions'], json_array['sections'])
-        self.import_function_comments(
-            json_array['func_comments'], json_array['sections'])
-        self.import_line_comments(
-            json_array['line_comments'], json_array['sections'])
+        self.import_function_comments(json_array['func_comments'],
+                                      json_array['sections'])
+        self.import_line_comments(json_array['line_comments'],
+                                  json_array['sections'])
         self.import_names(json_array['names'], json_array['sections'])
         self.import_structures(json_array['structs'])
         self.bv.update_analysis_and_wait()
