@@ -4,8 +4,10 @@ Exports analysis data from a BN database to a bnida JSON file
 
 import json
 from binaryninja import SaveFileNameField, get_form_input, BackgroundTaskThread, types
+from binaryninja.log import Logger
 from collections import OrderedDict
 
+logger = Logger(session_id=0, logger_name=__name__)
 
 class GetOptions(object):
     def __init__(self):
@@ -126,21 +128,32 @@ class ExportInBackground(BackgroundTaskThread):
         """
         Export analysis data to bnida JSON file
         """
-
-        print('[*] Exporting analysis data to {}'.format(
+        logger.log_info('[*] Exporting analysis data to {}'.format(
             self.options.json_file))
         json_array = {}
+
+        logger.log_debug("Exporting sections")
         json_array['sections'] = self.get_sections()
+
+        logger.log_debug("Exporting names")
         json_array['names'] = self.get_names()
+
+        logger.log_debug("Exporting functions")
         json_array['functions'] = self.get_functions()
+
+        logger.log_debug("Exporting function comments")
         json_array['func_comments'] = self.get_function_comments()
+
+        logger.log_debug("Exporting line comments")
         json_array['line_comments'] = self.get_line_comments()
+
+        logger.log_debug("Exporting structs")
         json_array['structs'] = self.get_structures()
 
         with open(self.options.json_file, 'w+') as f:
             json.dump(json_array, f, indent=4)
 
-        print('[+] Done exporting analysis data')
+        logger.log_info('[+] Done exporting analysis data')
 
 
 def export_data_in_background(bv):
